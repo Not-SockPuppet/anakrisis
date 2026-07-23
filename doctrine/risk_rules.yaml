@@ -1,0 +1,710 @@
+meta:
+  version: "1.1.0"
+  last_updated: "2026-02-16"
+  owner: "Anakrisis Maintainers"
+  change_log:
+    - "1.1.0: Replaced narrative rules with deterministic scoring model, explicit triggers, approvals/controls, explainability schema, and test cases."
+    - "1.0.0: Initial draft with basic factors, tiers, and mitigations."
+
+scope: "Deterministic risk scoring and tier mapping for offline OSINT investigation planning (decision-support only). Governs scoring, tiers, mandatory controls, approvals, mitigations, explainability output, and test cases."
+
+inputs:
+  fields:
+    goal:
+      type: "string"
+      required: false
+      default: ""
+    what_you_have:
+      type: "string"
+      required: false
+      default: ""
+    constraints:
+      type: "string"
+      required: false
+      default: ""
+    actor_role:
+      type: "string"
+      required: false
+      default: "unknown"
+      allowed_values:
+        - "unknown"
+        - "student"
+        - "journalist"
+        - "researcher"
+        - "corporate_security"
+        - "law_enforcement"
+        - "legal_counsel"
+        - "ngo"
+    method_class:
+      type: "string"
+      required: false
+      default: "unknown"
+      allowed_values:
+        - "unknown"
+        - "passive_public_sources"
+        - "request_access_or_permission"
+        - "direct_contact"
+        - "field_observation"
+        - "automation_or_bulk"
+        - "paid_data_access"
+    jurisdiction_country:
+      type: "string"
+      required: false
+      default: ""
+    jurisdiction_state:
+      type: "string"
+      required: false
+      default: ""
+
+normalization:
+  global:
+    trim_whitespace: true
+    collapse_internal_whitespace: true
+    lowercase: true
+  tokenization:
+    method: "whitespace_split"
+    keep_original_text: true
+    use_normalized_text_for_matching: true
+  notes: "All string matching in triggers uses normalized text (trimmed, lowercased, whitespace-collapsed)."
+  missing_field_handling:
+    rule: "Treat missing fields as their defaults; missing_any evaluates to true when a field is empty after normalization (empty string or enum equal to 'unknown')."
+    empty_definition: "A field is considered missing if, after normalization, it is an empty string or (for enums) equals its default 'unknown'."
+  regex_engine:
+    flags: "i"
+    description: "Regex patterns are evaluated case-insensitively."
+
+catalogs:
+  approvals:
+    APPROVAL_SUPERVISOR:
+      label: "Supervisor approval"
+      description: "A direct supervisor (or equivalent reviewer) must review and approve the plan."
+    APPROVAL_LEGAL_OR_COMPLIANCE:
+      label: "Legal/Compliance review"
+      description: "Legal or compliance review is required before proceeding beyond planning output."
+    APPROVAL_SENIOR_OWNER:
+      label: "Senior owner approval"
+      description: "A senior accountable owner must approve continued engagement due to critical risk signals."
+
+  controls:
+    CONTROL_LOG_DECISIONS:
+      label: "Log key decisions"
+      description: "Record inputs, triggered factors, tier, and rationale for auditability."
+    CONTROL_MINIMIZE_SCOPE:
+      label: "Minimize scope"
+      description: "Limit scope to what is necessary and proportional to the stated goal."
+    CONTROL_SOURCE_WHITELIST:
+      label: "Source whitelist"
+      description: "Use pre-approved sources and document sources used."
+    CONTROL_DATA_HANDLING_PLAN:
+      label: "Data handling plan"
+      description: "Specify storage, retention, and access controls for any collected data."
+    CONTROL_ESCALATION_PLAN:
+      label: "Escalation plan"
+      description: "Define escalation and safety plan for elevated-risk investigations."
+    CONTROL_RESTRICT_OUTPUT_DETAIL:
+      label: "Restricted-output mode"
+      description: "Reduce detail in outputs (avoid doxxing-like specifics, operationalization, or sensitive attributes)."
+    CONTROL_REFUSE_HIGH_RISK_ASSISTANCE:
+      label: "Safety-only output"
+      description: "Restrict output to safety guidance and lawful alternatives; refuse actionable assistance for harmful or evasive intent."
+    CONTROL_REQUIRE_MIN_FIELDS:
+      label: "Require minimum fields"
+      description: "Require minimum planning inputs before producing a finalized plan."
+    CONTROL_REQUIRE_AUTH_BASIS:
+      label: "Require authorization basis"
+      description: "Require an explicit authorization basis string (e.g., work order, consent, policy reference)."
+    CONTROL_INTERACTIVE_METHOD_REVIEW:
+      label: "Interactive method review"
+      description: "Require review before any direct contact, field observation, or access request planning."
+    CONTROL_BLOCK_DECEPTION_PLANS:
+      label: "Block deception plans"
+      description: "Prevent planning outputs that include deception/pretexting/impersonation; require lawful non-deceptive alternatives."
+    CONTROL_BULK_LIMITS:
+      label: "Bulk limits"
+      description: "Require explicit scope limits (target count/time window) and data handling controls for bulk/automation."
+    CONTROL_SENSITIVE_DATA_GUARDRAILS:
+      label: "Sensitive data guardrails"
+      description: "Enforce minimization and restricted-output rules for sensitive categories."
+    CONTROL_PRIVACY_IMPACT_ASSESSMENT:
+      label: "Privacy impact assessment"
+      description: "Require necessity/proportionality statement and intended-use justification for private individuals."
+    CONTROL_HOME_FAMILY_RESTRICTIONS:
+      label: "Home/family restrictions"
+      description: "Prevent operationalization of home/family information; require escalation for any such scope."
+    CONTROL_QUALITY_GATE:
+      label: "Quality gate"
+      description: "Require checklist completion before producing outputs under time pressure."
+
+evaluation_model:
+  scoring:
+    method: "sum_triggered_factor_scores"
+    score_floor: 0
+    score_cap: 20
+    factor_deduplication:
+      mode: "dedupe_by_factor_id"
+      description: "Each factor id contributes at most once even if multiple triggers match."
+    overlap_policy:
+      allow_overlap: true
+      description: "Different factors may trigger on related text. Overlap is allowed only when factors represent distinct concepts."
+
+  tier_mapping:
+    method: "range_match"
+    rule: "Select the tier whose [min_score, max_score] contains total_score."
+    tie_breakers:
+      - order: 1
+        rule: "If multiple tiers match due to configuration error, choose the tier with highest min_score."
+      - order: 2
+        rule: "If still tied, choose the tier with lexicographically greatest tier_id."
+
+  approvals_and_controls:
+    aggregation:
+      required_approvals: "union_of_tier_required_approvals"
+      mandatory_controls: "union_of_tier_mandatory_controls_and_factor_mandatory_controls"
+    factor_controls:
+      enabled: true
+      description: "Some factors add mandatory controls beyond the tier baseline via mitigations mapping."
+
+# Trigger schema (enforced by doctrine):
+# - type: one of [contains_any, not_contains_any, equals_any, missing_any]
+# - field: one of the input fields, or "fields" for missing_any
+# - values: list[string] for contains/equals/not_contains
+# - fields: list[string] for missing_any
+# - explain_text: string
+
+risk_factors:
+  - id: "RF_MISSING_CONTEXT"
+    name: "Insufficient planning context"
+    score: 2
+    description: "Key planning inputs are missing, reducing reliable risk assessment."
+    rationale: "Incomplete inputs reduce auditability and increase the chance of unsafe planning assumptions."
+    evidence_fields: ["goal", "actor_role", "method_class", "jurisdiction_country"]
+    triggers:
+      - type: "missing_any"
+        field: "fields"
+        fields: ["goal", "actor_role", "method_class", "jurisdiction_country"]
+        explain_text: "Key planning inputs are missing; risk assessment confidence is reduced."
+
+  - id: "RF_AUTH_UNKNOWN"
+    name: "Authorization basis not provided"
+    score: 2
+    description: "No authorization/consent basis is stated because constraints are empty."
+    rationale: "An explicit authorization basis improves auditability; when constraints are blank, authorization status is unknown and should be surfaced without treating it as explicit lack of authorization."
+    evidence_fields: ["constraints"]
+    triggers:
+      - type: "missing_any"
+        field: "fields"
+        fields: ["constraints"]
+        explain_text: "Constraints are empty; authorization basis is unknown."
+
+  - id: "RF_NO_AUTH"
+    name: "No explicit authorization or consent stated"
+    score: 4
+    description: "The plan does not include a documented authorization basis (or indicates lack of authorization)."
+    rationale: "Authorization and lawful basis are central to ethical OSINT planning and audit defensibility."
+    evidence_fields: ["constraints", "goal", "what_you_have"]
+    triggers:
+      # Explicit negative statements
+      - type: "contains_any"
+        field: "constraints"
+        values: ["no authorization", "unauthorized", "without permission", "no consent", "without consent"]
+        explain_text: "Plan explicitly states lack of authorization/consent."
+      - type: "contains_any"
+        field: "goal"
+        values: ["without permission", "no consent", "unauthorized"]
+        explain_text: "Goal text explicitly states lack of authorization/consent."
+      # Missing authorization basis (silence) — only triggers if constraints text exists
+      # and does NOT contain any positive authorization indicators.
+      - type: "not_contains_any"
+        field: "constraints"
+        values: ["authorized", "with permission", "consent", "written authorization", "case number", "case id", "ticket", "work order", "work request", "request id", "approved", "per policy", "per counsel", "legal approved", "client authorized", "consent obtained", "signed", "engagement letter", "retainer"]
+        evaluate_if_field_non_empty: true
+        explain_text: "Constraints text exists but does not state a positive authorization/consent basis."
+
+  - id: "RF_NON_PASSIVE_METHOD"
+    name: "Non-passive or interactive method indicated"
+    score: 3
+    description: "The plan includes direct interaction or non-passive methods."
+    rationale: "Interactive methods raise risks of deception, escalation, and legal/ethical boundary crossing."
+    evidence_fields: ["method_class", "constraints", "goal"]
+    triggers:
+      - type: "equals_any"
+        field: "method_class"
+        values: ["direct_contact", "field_observation", "request_access_or_permission"]
+        explain_text: "method_class indicates an interactive/non-passive approach."
+      - type: "contains_any"
+        field: "constraints"
+        values: ["contact them", "message them", "call them", "email them", "in person", "approach", "interview", "pose as", "impersonate"]
+        explain_text: "Constraints reference direct interaction with a person."
+      - type: "contains_any"
+        field: "goal"
+        values: ["reach out", "contact", "interview", "confront", "sting"]
+        explain_text: "Goal references direct interaction."
+
+  - id: "RF_DECEPTION_OR_IMPERSONATION"
+    name: "Deception or impersonation intent"
+    score: 5
+    description: "The plan includes deception, impersonation, pretexting, or misrepresentation."
+    rationale: "Deception increases ethical and legal exposure and can create harm."
+    evidence_fields: ["constraints", "goal"]
+    triggers:
+      - type: "contains_any"
+        field: "constraints"
+        values: ["impersonate", "pretend to be", "pose as", "use pretexting", "pretext them", "catfish", "fake profile", "sockpuppet", "misrepresent myself"]
+        explain_text: "Plan includes deception/impersonation/pretexting."
+      - type: "contains_any"
+        field: "goal"
+        values: ["impersonate", "use pretexting", "pretext them", "fake identity", "pose as", "create a fake profile"]
+        explain_text: "Goal includes deception/impersonation/pretexting."
+
+  - id: "RF_AUTOMATION_OR_BULK"
+    name: "Automation or bulk collection referenced"
+    score: 4
+    description: "The plan references automation, scraping, or bulk capture."
+    rationale: "Automation/bulk increases privacy impact and the risk of policy or legal violations even in planning."
+    evidence_fields: ["method_class", "constraints", "goal"]
+    triggers:
+      - type: "equals_any"
+        field: "method_class"
+        values: ["automation_or_bulk"]
+        explain_text: "method_class indicates automation or bulk collection."
+      - type: "contains_any"
+        field: "constraints"
+        values: ["scrape", "scraping", "crawler", "bot", "automation", "automate", "bulk", "at scale", "large scale", "mass collect", "batch", "harvest"]
+        explain_text: "Constraints reference scraping/automation/bulk collection."
+      - type: "contains_any"
+        field: "goal"
+        values: ["bulk", "at scale", "large scale", "scrape", "scraping", "harvest", "collect many", "batch"]
+        explain_text: "Goal references bulk collection."
+
+  - id: "RF_SENSITIVE_CATEGORIES"
+    name: "Sensitive personal categories in scope"
+    score: 4
+    description: "The plan references sensitive personal attributes."
+    rationale: "Sensitive categories elevate ethical risk and require tighter controls."
+    evidence_fields: ["goal", "constraints"]
+    triggers:
+      - type: "contains_any"
+        field: "goal"
+        values: ["medical", "health", "diagnosis", "therapy", "mental health", "religion", "political", "union", "sexual orientation", "immigration status", "refugee", "minor", "child"]
+        explain_text: "Goal includes sensitive personal categories."
+      - type: "contains_any"
+        field: "constraints"
+        values: ["medical", "health", "religion", "political", "sexual orientation", "immigration status", "minor", "child"]
+        explain_text: "Constraints include sensitive personal categories."
+
+  - id: "RF_PRIVATE_INDIVIDUAL"
+    name: "Private individual likely in scope"
+    score: 3
+    description: "The plan indicates a private individual rather than a public figure/organization."
+    rationale: "Investigations involving private individuals carry higher privacy and harm risk."
+    evidence_fields: ["goal", "constraints"]
+    triggers:
+      - type: "contains_any"
+        field: "goal"
+        values: ["neighbor", "ex partner", "ex-partner", "private citizen", "private person", "someone i know", "classmate", "coworker", "friend", "roommate"]
+        explain_text: "Goal suggests a private individual target."
+      - type: "contains_any"
+        field: "constraints"
+        values: ["private individual", "not a public figure", "non-public", "ordinary person"]
+        explain_text: "Constraints state the target is a private individual."
+
+  - id: "RF_DWELLING_OR_FAMILY"
+    name: "Home, family, or close associates in scope"
+    score: 4
+    description: "The plan references targeting or mapping a person’s home, family members, or close associates."
+    rationale: "Home/family association work increases safety and harassment risks."
+    evidence_fields: ["goal", "constraints"]
+    triggers:
+      - type: "contains_any"
+        field: "goal"
+        values: ["home address", "residential address", "where they live", "residential location", "residence", "family members", "kids", "children", "spouse", "parents", "siblings"]
+        explain_text: "Goal includes home/family/close-associate scope."
+      - type: "contains_any"
+        field: "constraints"
+        values: ["home address", "residential address", "residence", "residential location", "family", "children", "school", "daycare"]
+        explain_text: "Constraints include home/family/close-associate scope."
+
+  - id: "RF_URGENCY_TIME_PRESSURE"
+    name: "Urgency or time pressure"
+    score: 2
+    description: "The plan indicates urgent timing or deadlines."
+    rationale: "Time pressure correlates with weaker documentation and shortcuts."
+    evidence_fields: ["constraints", "goal"]
+    triggers:
+      - type: "contains_any"
+        field: "constraints"
+        values: ["urgent", "asap", "today", "within hours", "deadline", "time sensitive", "rush"]
+        explain_text: "Constraints indicate urgency/time pressure."
+      - type: "contains_any"
+        field: "goal"
+        values: ["urgent", "asap", "immediately", "by end of day"]
+        explain_text: "Goal indicates urgency/time pressure."
+
+  - id: "RF_MALICIOUS_OR_HARASSMENT_INTENT"
+    name: "Harassment, intimidation, or doxxing intent"
+    score: 8
+    description: "The plan indicates intent to harass, intimidate, expose, or facilitate harm."
+    rationale: "Harmful intent is incompatible with ethics-first OSINT planning and requires strong restrictions."
+    evidence_fields: ["goal", "constraints"]
+    triggers:
+      - type: "contains_any"
+        field: "goal"
+        values: ["i want to dox", "help me dox", "publish private information", "expose their home address", "harass them", "intimidate them", "blackmail them", "stalk them", "target them", "send threats", "threaten them"]
+        explain_text: "Goal indicates harmful/harassment intent."
+      - type: "contains_any"
+        field: "constraints"
+        values: ["i want to dox", "help me dox", "publish private information", "expose their home address", "harass them", "intimidate them", "blackmail them", "stalk them", "target them", "send threats", "threaten them"]
+        explain_text: "Constraints indicate harmful/harassment intent."
+
+  - id: "RF_BYPASS_OR_EVASION"
+    name: "Bypass, evasion, or access circumvention"
+    score: 7
+    description: "The plan references bypassing access controls or evasion of restrictions."
+    rationale: "Circumvention signals high compliance risk and potential illegality."
+    evidence_fields: ["goal", "constraints", "what_you_have"]
+    triggers:
+      - type: "contains_any"
+        field: "constraints"
+        values: ["bypass", "evade", "circumvent", "access without login", "avoid detection", "burner accounts", "sockpuppet to access"]
+        explain_text: "Constraints reference bypass/evasion/circumvention."
+      - type: "contains_any"
+        field: "goal"
+        values: ["bypass", "circumvent", "evade"]
+        explain_text: "Goal references bypass/evasion/circumvention."
+      - type: "contains_any"
+        field: "what_you_have"
+        values: ["stolen", "leaked credentials", "password list", "credential dump"]
+        explain_text: "what_you_have suggests suspicious access means."
+
+risk_tiers:
+  - id: "TIER_LOW"
+    min_score: 0
+    max_score: 3
+    description: "Low risk: passive planning with adequate context and no elevated signals."
+    response_mode: "normal"
+    required_approvals: []
+    mandatory_controls:
+      - "CONTROL_LOG_DECISIONS"
+      - "CONTROL_MINIMIZE_SCOPE"
+
+  - id: "TIER_MEDIUM"
+    min_score: 4
+    max_score: 8
+    description: "Medium risk: elevated factors present; supervisor review required."
+    response_mode: "restricted"
+    required_approvals:
+      - "APPROVAL_SUPERVISOR"
+    mandatory_controls:
+      - "CONTROL_LOG_DECISIONS"
+      - "CONTROL_MINIMIZE_SCOPE"
+      - "CONTROL_SOURCE_WHITELIST"
+      - "CONTROL_DATA_HANDLING_PLAN"
+
+  - id: "TIER_HIGH"
+    min_score: 9
+    max_score: 14
+    description: "High risk: sensitive, private, deceptive, or automation/bulk indicators; legal/compliance review required."
+    response_mode: "restricted"
+    required_approvals:
+      - "APPROVAL_SUPERVISOR"
+      - "APPROVAL_LEGAL_OR_COMPLIANCE"
+    mandatory_controls:
+      - "CONTROL_LOG_DECISIONS"
+      - "CONTROL_MINIMIZE_SCOPE"
+      - "CONTROL_SOURCE_WHITELIST"
+      - "CONTROL_DATA_HANDLING_PLAN"
+      - "CONTROL_ESCALATION_PLAN"
+      - "CONTROL_RESTRICT_OUTPUT_DETAIL"
+
+  - id: "TIER_CRITICAL"
+    min_score: 15
+    max_score: 20
+    description: "Critical risk: bypass/evasion or harmful intent indicators; stop-and-review with senior approval."
+    response_mode: "safety_only"
+    required_approvals:
+      - "APPROVAL_SUPERVISOR"
+      - "APPROVAL_LEGAL_OR_COMPLIANCE"
+      - "APPROVAL_SENIOR_OWNER"
+    mandatory_controls:
+      - "CONTROL_LOG_DECISIONS"
+      - "CONTROL_MINIMIZE_SCOPE"
+      - "CONTROL_ESCALATION_PLAN"
+      - "CONTROL_RESTRICT_OUTPUT_DETAIL"
+      - "CONTROL_REFUSE_HIGH_RISK_ASSISTANCE"
+
+mitigations:
+  by_factor_id:
+    RF_MISSING_CONTEXT:
+      mandatory_controls:
+        - "CONTROL_REQUIRE_MIN_FIELDS"
+      actions:
+        - "Require completion of goal, constraints, actor_role, method_class, and jurisdiction_country before producing a finalized plan."
+        - "Record missing fields in audit log output."
+
+    RF_NO_AUTH:
+      mandatory_controls:
+        - "CONTROL_REQUIRE_AUTH_BASIS"
+      actions:
+        - "Require an explicit authorization basis string in constraints before producing a finalized plan."
+        - "Record authorization basis (e.g., work order, consent, policy reference) in audit log output."
+
+    RF_NON_PASSIVE_METHOD:
+      mandatory_controls:
+        - "CONTROL_INTERACTIVE_METHOD_REVIEW"
+      actions:
+        - "Require supervisor approval before suggesting any steps labeled as direct contact, field observation, or access request."
+        - "Enforce inclusion of a safety and escalation plan for any interactive method_class."
+
+    RF_DECEPTION_OR_IMPERSONATION:
+      mandatory_controls:
+        - "CONTROL_BLOCK_DECEPTION_PLANS"
+      actions:
+        - "Prevent planning output that includes deception/impersonation/pretexting; require lawful non-deceptive alternatives only."
+        - "Require legal/compliance review for any continued engagement."
+
+    RF_AUTOMATION_OR_BULK:
+      mandatory_controls:
+        - "CONTROL_BULK_LIMITS"
+      actions:
+        - "Require explicit scope limits (target count and time window) in constraints before producing bulk-related planning output."
+        - "Require a data handling plan specifying storage location, retention period, and access controls."
+
+    RF_SENSITIVE_CATEGORIES:
+      mandatory_controls:
+        - "CONTROL_SENSITIVE_DATA_GUARDRAILS"
+      actions:
+        - "Require minimization statement: exclude sensitive-category data unless strictly necessary to the stated goal."
+        - "Require restricted-output mode: omit sensitive attributes from any generated plan summary unless explicitly authorized."
+
+    RF_PRIVATE_INDIVIDUAL:
+      mandatory_controls:
+        - "CONTROL_PRIVACY_IMPACT_ASSESSMENT"
+      actions:
+        - "Require a privacy impact statement in constraints describing necessity, proportionality, and intended use."
+        - "Enforce restricted-output mode: exclude contact details and location specifics from plan outputs."
+
+    RF_DWELLING_OR_FAMILY:
+      mandatory_controls:
+        - "CONTROL_HOME_FAMILY_RESTRICTIONS"
+      actions:
+        - "Prevent any plan output that suggests obtaining or operationalizing home address, school, daycare, or family member details."
+        - "Require escalation review before discussing any home/family-related scope."
+
+    RF_URGENCY_TIME_PRESSURE:
+      mandatory_controls:
+        - "CONTROL_QUALITY_GATE"
+      actions:
+        - "Require a documented checklist completion in constraints (authorization basis, scope, minimization, logging) before producing output."
+
+    RF_MALICIOUS_OR_HARASSMENT_INTENT:
+      mandatory_controls:
+        - "CONTROL_REFUSE_HIGH_RISK_ASSISTANCE"
+      actions:
+        - "Restrict output to safety guidance and lawful alternatives when harassment/doxxing/blackmail/stalking intent is detected."
+        - "Require supervisor and legal/compliance approvals for any further assistance."
+
+    RF_BYPASS_OR_EVASION:
+      mandatory_controls:
+        - "CONTROL_REFUSE_HIGH_RISK_ASSISTANCE"
+      actions:
+        - "Restrict output to lawful/authorized alternatives only when bypass/circumvention/evasion is detected."
+        - "Require legal/compliance review before any continued engagement."
+
+explainability:
+  status: "future"
+  notes: "Schema for a richer explainability/audit output. anakrisis.py does not currently emit these fields; treat as optional/future until implemented."
+  required_output_fields:
+    - "total_score"
+    - "tier_id"
+    - "triggered_factors"
+    - "triggered_factor_details"
+    - "required_approvals"
+    - "mandatory_controls"
+    - "mitigations_applied"
+    - "confidence"
+    - "audit"
+
+  triggered_factor_details_schema:
+    id: "string"
+    score: "integer"
+    explain_text: "string"
+    matched_evidence_snippets: "list[string]"
+    evidence_fields: "list[string]"
+
+  mitigations_applied_schema:
+    by_factor_id:
+      mandatory_controls: "list[string]"
+      actions: "list[string]"
+
+  confidence:
+    method: "field_completeness_score"
+    key_fields: ["goal", "constraints", "actor_role", "method_class", "jurisdiction_country"]
+    scoring:
+      present_points_per_field: 20
+      missing_points_per_field: 0
+      total_points: 100
+    mapping:
+      - min_points: 100
+        max_points: 100
+        label: "HIGH"
+      - min_points: 60
+        max_points: 99
+        label: "MEDIUM"
+      - min_points: 0
+        max_points: 59
+        label: "LOW"
+    output_rule: "Compute points by summing present_points_per_field for each key field that is non-empty after normalization (and for enums, not equal to 'unknown'). Map points to label."
+
+  audit:
+    required_fields:
+      - "meta_version"
+      - "normalized_inputs"
+      - "matched_triggers"
+      - "score_cap_applied"
+    matched_triggers_schema:
+      factor_id: "string"
+      trigger_index: "integer"
+      field: "string"
+      match_type: "string"
+      match_value: "string"
+
+test_cases:
+  - id: "TC01_passive_company_due_diligence"
+    input:
+      goal: "Assess reputational risk for a vendor company using public news and corporate filings."
+      what_you_have: "Company legal name and website URL."
+      constraints: "authorized by internal procurement work order; passive only; document sources."
+      actor_role: "corporate_security"
+      method_class: "passive_public_sources"
+      jurisdiction_country: "us"
+      jurisdiction_state: "ny"
+    expected:
+      triggered_factor_ids: []
+      expected_score: 0
+      expected_tier_id: "TIER_LOW"
+
+  - id: "TC02_missing_context_basic"
+    input:
+      goal: ""
+      what_you_have: "A nickname and a city."
+      constraints: ""
+      actor_role: "unknown"
+      method_class: "unknown"
+      jurisdiction_country: ""
+      jurisdiction_state: ""
+    expected:
+      triggered_factor_ids: ["RF_MISSING_CONTEXT", "RF_AUTH_UNKNOWN"]
+      expected_score: 4
+      expected_tier_id: "TIER_MEDIUM"
+
+  - id: "TC03_private_individual_background_check"
+    input:
+      goal: "Find background information about a private citizen neighbor for personal curiosity."
+      what_you_have: "First name only."
+      constraints: "no authorization; personal use."
+      actor_role: "student"
+      method_class: "passive_public_sources"
+      jurisdiction_country: "us"
+      jurisdiction_state: "pa"
+    expected:
+      triggered_factor_ids: ["RF_NO_AUTH", "RF_PRIVATE_INDIVIDUAL"]
+      expected_score: 7
+      expected_tier_id: "TIER_MEDIUM"
+
+  - id: "TC04_sensitive_health_topic_planning"
+    input:
+      goal: "Investigate whether an employee has a medical condition based on online discussion."
+      what_you_have: "Only a handle on a forum."
+      constraints: "authorized by manager request; passive only; minimize scope."
+      actor_role: "corporate_security"
+      method_class: "passive_public_sources"
+      jurisdiction_country: "us"
+      jurisdiction_state: "ca"
+    expected:
+      triggered_factor_ids: ["RF_SENSITIVE_CATEGORIES"]
+      expected_score: 4
+      expected_tier_id: "TIER_MEDIUM"
+
+  - id: "TC05_automation_bulk_vendor_screening"
+    input:
+      goal: "Screen 500 vendor domains for risk signals by scraping pages and collecting all contacts."
+      what_you_have: "List of vendor domains."
+      constraints: "authorized by procurement; automate with a crawler; store results for 1 year."
+      actor_role: "corporate_security"
+      method_class: "automation_or_bulk"
+      jurisdiction_country: "us"
+      jurisdiction_state: "tx"
+    expected:
+      triggered_factor_ids: ["RF_AUTOMATION_OR_BULK"]
+      expected_score: 4
+      expected_tier_id: "TIER_MEDIUM"
+
+  - id: "TC06_direct_contact_interview_request"
+    input:
+      goal: "Contact a former coworker to ask about a dispute timeline."
+      what_you_have: "Work email address from internal directory."
+      constraints: "authorized by legal counsel; email them for interview."
+      actor_role: "legal_counsel"
+      method_class: "direct_contact"
+      jurisdiction_country: "us"
+      jurisdiction_state: "il"
+    expected:
+      triggered_factor_ids: ["RF_NON_PASSIVE_METHOD"]
+      expected_score: 3
+      expected_tier_id: "TIER_LOW"
+
+  - id: "TC07_deception_pretexting"
+    input:
+      goal: "Gain access to a private online group by posing as a member to observe discussions."
+      what_you_have: "Group name."
+      constraints: "create a fake profile and pretend to be a member; time sensitive."
+      actor_role: "researcher"
+      method_class: "request_access_or_permission"
+      jurisdiction_country: "us"
+      jurisdiction_state: "wa"
+    expected:
+      triggered_factor_ids: ["RF_DECEPTION_OR_IMPERSONATION", "RF_NON_PASSIVE_METHOD", "RF_URGENCY_TIME_PRESSURE"]
+      expected_score: 10
+      expected_tier_id: "TIER_HIGH"
+
+  - id: "TC08_home_family_scope"
+    input:
+      goal: "Determine where a private citizen lives and identify family members."
+      what_you_have: "A public username."
+      constraints: "passive only; no consent stated."
+      actor_role: "journalist"
+      method_class: "passive_public_sources"
+      jurisdiction_country: "us"
+      jurisdiction_state: "fl"
+    expected:
+      triggered_factor_ids: ["RF_NO_AUTH", "RF_PRIVATE_INDIVIDUAL", "RF_DWELLING_OR_FAMILY"]
+      expected_score: 11
+      expected_tier_id: "TIER_HIGH"
+
+  - id: "TC09_harassment_doxxing_intent"
+    input:
+      goal: "Harass a person by publishing private information to target them."
+      what_you_have: "A social media handle."
+      constraints: "urgent; no consent; share their home address."
+      actor_role: "unknown"
+      method_class: "passive_public_sources"
+      jurisdiction_country: "us"
+      jurisdiction_state: "ny"
+    expected:
+      triggered_factor_ids: ["RF_MALICIOUS_OR_HARASSMENT_INTENT", "RF_URGENCY_TIME_PRESSURE", "RF_DWELLING_OR_FAMILY", "RF_NO_AUTH"]
+      expected_score: 18
+      expected_tier_id: "TIER_CRITICAL"
+
+  - id: "TC10_bypass_paywall_evasion"
+    input:
+      goal: "Circumvent a paywall to access private records for a story."
+      what_you_have: "A link to a paid database."
+      constraints: "bypass paywall and avoid detection; no authorization mentioned."
+      actor_role: "journalist"
+      method_class: "paid_data_access"
+      jurisdiction_country: "us"
+      jurisdiction_state: "ma"
+    expected:
+      triggered_factor_ids: ["RF_BYPASS_OR_EVASION", "RF_NO_AUTH"]
+      expected_score: 11
+      expected_tier_id: "TIER_HIGH"

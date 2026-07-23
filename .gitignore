@@ -1,0 +1,21 @@
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Editor / tooling
+.idea/
+.vscode/
+.obsidian/
+.claude/
+CLAUDE.md
+
+# Local-only data — never publish investigation material
+cases/
+Backup/

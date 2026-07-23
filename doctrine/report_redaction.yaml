@@ -1,0 +1,231 @@
+meta:
+  name: ReportRedaction
+  version: "1.0"
+  purpose: Defines redaction logic, profiles, and output structure for OSINT publication-safety workflows
+  scope: Redaction identification, representation, preservation, residual risk assessment, and output formatting only
+  out_of_scope:
+    - File handling
+    - Report storage
+    - Access control
+    - Encryption
+    - Document management
+  design_principles:
+    - Investigator-focused
+    - Publication-safe
+    - Preserve analytical value
+    - Minimize unnecessary redactions
+    - Use structured replacement tokens
+    - Favor transparency over deletion
+    - Support auditability
+    - Support journalism, corporate, and investigative workflows
+
+redaction_profiles:
+  public_release:
+    label: Public Release
+    description: Maximum redaction for general public audiences. All sensitive identifiers, PII, SPII, source identities, and operational details are redacted.
+    categories_to_redact:
+      - source_identity
+      - confidential_source
+      - pii
+      - spii
+      - email
+      - phone
+      - address
+      - date_of_birth
+      - government_identifier
+      - financial_identifier
+      - internal_case_reference
+      - employee_identifier
+      - witness_identity
+      - minor_identity
+      - public_figure_private_detail
+      - investigative_sensitive
+      - operational_detail
+
+  journalist_release:
+    label: Journalist Release
+    description: Moderate redaction for vetted journalists. Source identities and confidential sources remain redacted. Some operational context may be preserved to support editorial verification.
+    categories_to_redact:
+      - source_identity
+      - confidential_source
+      - spii
+      - date_of_birth
+      - government_identifier
+      - financial_identifier
+      - internal_case_reference
+      - witness_identity
+      - minor_identity
+      - public_figure_private_detail
+      - investigative_sensitive
+      - operational_detail
+
+  client_release:
+    label: Client Release
+    description: Tailored redaction for the commissioning client. Internal case references and employee identifiers may be retained. Source identities and witness identities remain protected.
+    categories_to_redact:
+      - source_identity
+      - confidential_source
+      - witness_identity
+      - minor_identity
+      - investigative_sensitive
+      - spii
+      - date_of_birth
+      - government_identifier
+
+redaction_categories:
+  source_identity:
+    label: Source Identity
+    description: Name, alias, or any identifier that could reveal a human intelligence source.
+    replacement_token: "[REDACTED_SOURCE_{N}]"
+
+  confidential_source:
+    label: Confidential Source
+    description: References to off-record or protected sources, including indirect descriptors that could enable identification.
+    replacement_token: "[REDACTED_CONFIDENTIAL_SOURCE_{N}]"
+
+  pii:
+    label: Personally Identifiable Information
+    description: General personal identifiers including full name, username linked to a real identity, or unique personal descriptor.
+    replacement_token: "[REDACTED_PII_{N}]"
+
+  spii:
+    label: Sensitive PII
+    description: High-sensitivity personal data including biometric data, health records, sexual orientation, religion, and immigration status.
+    replacement_token: "[REDACTED_SPII_{N}]"
+
+  email:
+    label: Email Address
+    description: Any personal or organizational email address not already in the public domain.
+    replacement_token: "[REDACTED_EMAIL_{N}]"
+
+  phone:
+    label: Phone Number
+    description: Any personal or organizational phone number not already in the public domain.
+    replacement_token: "[REDACTED_PHONE_{N}]"
+
+  address:
+    label: Physical Address
+    description: Home, workplace, or other physical location linked to an individual.
+    replacement_token: "[REDACTED_ADDRESS_{N}]"
+
+  date_of_birth:
+    label: Date of Birth
+    description: Full or partial date of birth that could contribute to individual identification.
+    replacement_token: "[REDACTED_DOB_{N}]"
+
+  government_identifier:
+    label: Government Identifier
+    description: Passport numbers, national ID numbers, tax identifiers, social security numbers, and equivalent.
+    replacement_token: "[REDACTED_GOVID_{N}]"
+
+  financial_identifier:
+    label: Financial Identifier
+    description: Bank account numbers, credit card numbers, cryptocurrency wallet addresses linked to private individuals or victim funds, and similar financial identifiers.
+    replacement_token: "[REDACTED_FINID_{N}]"
+
+  internal_case_reference:
+    label: Internal Case Reference
+    description: Case numbers, internal file identifiers, or project codes used within the investigating organization.
+    replacement_token: "[REDACTED_CASEREF_{N}]"
+
+  employee_identifier:
+    label: Employee Identifier
+    description: Internal staff IDs, badge numbers, or role-linked identifiers that could expose organizational structure.
+    replacement_token: "[REDACTED_EMPID_{N}]"
+
+  witness_identity:
+    label: Witness Identity
+    description: Name, alias, or descriptor identifying a witness or protected third party referenced in the investigation.
+    replacement_token: "[REDACTED_WITNESS_{N}]"
+
+  minor_identity:
+    label: Minor Identity
+    description: Name, alias, school, family relationship, image reference, or contextual detail that could identify a minor.
+    replacement_token: "[REDACTED_MINOR_{N}]"
+
+  public_figure_private_detail:
+    label: Public Figure Private Detail
+    description: Non-public personal details about a public figure, including home address, family details, private contact information, health, finances, or personal routines.
+    replacement_token: "[REDACTED_PUBLIC_FIGURE_PRIVATE_{N}]"
+
+  investigative_sensitive:
+    label: Investigative Sensitive Detail
+    description: Sensitive investigative information such as pending legal process, subpoenas, warrants, protected collection methods, source-handling details, or unreleased investigative strategy.
+    replacement_token: "[REDACTED_INVESTIGATIVE_{N}]"
+
+  operational_detail:
+    label: Operational Detail
+    description: Operational specifics of the investigation such as collection timing, tooling configuration, monitoring windows, or logistics that could expose methods or enable countermeasures if disclosed.
+    replacement_token: "[REDACTED_OPERATIONAL_{N}]"
+
+token_rules:
+  - rule: Use consistent replacement tokens for repeated references to the same entity.
+  - rule: Do not use the same replacement token for different entities.
+  - rule: Preserve enough surrounding context for readability and analytical usefulness.
+  - rule: Prefer partial redaction when full removal would obscure the finding.
+
+preservation_rules:
+  - rule: Preserve all investigative findings and analytical conclusions that do not directly expose protected identities.
+  - rule: Preserve timelines and chronological sequences unless a specific date directly enables re-identification of a protected individual.
+  - rule: Preserve methodological descriptions at a general level. Redact only the specific operational details that could compromise safety.
+  - rule: Preserve references to publicly known organizations, companies, and institutions.
+  - rule: Preserve public-interest information about public figures while redacting private details unrelated to the public-interest finding.
+  - rule: Preserve publicly registered domains, IP addresses attributed to known organizations, and usernames already in the public domain.
+  - rule: Preserve statistical summaries, aggregated findings, and pattern analysis.
+  - rule: Preserve quoted statements from public officials or individuals who have made public statements in their official capacity.
+  - rule: When in doubt, prefer partial redaction over full removal to maintain report usefulness and auditability.
+
+residual_risk_rules:
+  low:
+    definition: Remaining content is unlikely to enable identification of protected individuals even with supplementary public information.
+    examples:
+      - Generic role description without name, location, or organization
+      - Aggregated behavioral pattern with no unique identifiers
+      - Publicly known organizational affiliation with no personal detail
+
+  medium:
+    definition: Remaining content contains contextual details that, combined with external sources, could narrow identification to a small group.
+    examples:
+      - Redacted name but retained organization, date, and role title
+      - Redacted email but retained domain and department reference
+      - Redacted address but retained city, profession, and event attendance
+
+  high:
+    definition: Remaining content, even after redaction, carries a meaningful risk that a determined reader could identify a protected individual.
+    examples:
+      - Unique incident description that matches a known public event involving a named individual
+      - Combination of retained attributes sufficient for database cross-referencing
+      - Contextual narrative that effectively describes a single identifiable person without naming them
+
+residual_risk_assessment_guidance:
+  - Evaluate whether retained context, in combination with publicly available information, could re-identify any protected individual.
+  - Assess cumulative risk across all retained attributes, not each attribute in isolation.
+  - Assign the highest applicable risk level if any protected category is at elevated re-identification risk.
+  - Flag cases where narrative context effectively identifies an individual despite token substitution.
+
+response_structure:
+  ordered_sections:
+    - section: Selected Redaction Profile
+      description: States the redaction profile applied, its label, and the rationale for its selection relative to the intended audience.
+
+    - section: Redacted Report
+      description: The full report text with all applicable redactions applied using structured replacement tokens. Analytical value and investigative findings are preserved to the maximum extent possible.
+
+    - section: Redaction Log
+      description: A structured log of every redaction applied. Each entry must include the replacement token used, the redaction category, and the reason the redaction was applied.
+      required_fields:
+        - replacement_token
+        - category
+        - reason
+
+    - section: Preserved Information
+      description: A summary of information intentionally retained in the report, with a brief justification confirming it does not expose protected individuals or compromise operational safety.
+
+    - section: Residual Risk Assessment
+      description: An evaluation of whether remaining content, after redaction, could still enable identification of protected individuals. Must assign a risk level of low, medium, or high and explain the basis for that assessment.
+      required_fields:
+        - risk_level
+        - explanation
+
+    - section: Reviewer Notes
+      description: Optional flags, ambiguous cases, recommended additional redactions, or items requiring human review before publication. Should note any areas where automated redaction confidence is reduced.

@@ -1,0 +1,58 @@
+# Threat Assessment Investigation Playbook
+
+investigation_type: "threat_assessment"
+description: "Evaluate potential threats to safety or security"
+
+risk_baseline: "high"
+
+phases:
+  - intake
+  - planning
+  - discovery
+  - validation
+  - reporting
+  - escalation
+
+safe_first_steps:
+  - "Document specific concerning behavior or communications"
+  - "Conduct structured risk triage; involve law enforcement immediately if there is an imminent, credible threat"
+  - "Verify authorization from security/legal team"
+  - "Review all available context and background"
+  - "Limit collection to information relevant to threat indicators"
+  - "Identify publicly available information about subject"
+  - "Consult with threat assessment professionals"
+
+authorization_requirements:
+  - "Management approval for investigation"
+  - "Legal review of scope and methods"
+  - "Law enforcement coordination (if criminal threat)"
+  - "Clear escalation procedures"
+
+data_sources:
+  allowed:
+    - "Reported communications (preserve originals and maintain documented chain of custody)"
+    - "Public social media posts"
+    - "Published online content"
+    - "Background check databases (if authorized)"
+  restricted:
+    - "Private communications (requires warrant)"
+    - "Real-time or historical location tracking (requires lawful authority)"
+    - "Medical/mental health records (privileged)"
+
+prohibited_methods:
+  - "Direct contact with subject (may escalate threat)"
+  - "Unauthorized surveillance"
+  - "Pretexting or social engineering"
+  - "Accessing private accounts or communications"
+
+special_considerations:
+  - "Mental health indicators (avoid speculation; rely on documented behavior)"
+  - "False positive risk (over-reaction can cause harm)"
+  - "Subject's rights and privacy"
+  - "Duty to warn potential victims"
+
+escalation_triggers:
+  - "Specific credible threat of violence"
+  - "Access to weapons combined with threatening behavior"
+  - "Escalating behavior or increasing specificity of threats"
+  - "Fixation on specific target or location"

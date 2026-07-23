@@ -1,0 +1,279 @@
+meta:
+  tool: TextAnalyzer
+  doctrine_version: "1.0"
+  purpose: >
+    Defines interpretation logic, highlight priorities, warning detection,
+    investigative pivots, and output structure for OSINT text analysis.
+    Does not handle parsing, language detection, or translation at the low level.
+  scope: Investigator-facing. PII is preserved and surfaced, never redacted.
+
+highlight_categories:
+  note: All detected artifacts must be surfaced regardless of intent classification.
+  categories:
+    - id: email
+      label: Email Address
+      description: Any email address present in the text.
+      priority: high
+
+    - id: phone
+      label: Phone Number
+      description: Local or international phone numbers, including formatted variants.
+      priority: high
+
+    - id: username
+      label: Username / Handle
+      description: Social media handles, forum usernames, or aliases (e.g., @handle, u/name).
+      priority: high
+
+    - id: domain
+      label: Domain / URL
+      description: Web domains, subdomains, or full URLs referencing external resources.
+      priority: high
+
+    - id: ip_address
+      label: IP Address
+      description: IPv4 or IPv6 addresses, including those in logs or headers.
+      priority: high
+
+    - id: crypto_address
+      label: Cryptocurrency Address
+      description: Wallet addresses for BTC, ETH, Monero, or other chains.
+      priority: high
+
+    - id: full_name
+      label: Full Name
+      description: Real names or apparent legal names of individuals.
+      priority: high
+
+    - id: physical_address
+      label: Physical Address
+      description: Street addresses, GPS coordinates, or identifiable location descriptors.
+      priority: high
+
+    - id: government_id
+      label: Government ID / Document Number
+      description: Passport numbers, SSNs, driver's license numbers, or similar identifiers.
+      priority: high
+
+    - id: financial_info
+      label: Financial Information
+      description: Bank account numbers, card numbers, routing numbers, or IBAN.
+      priority: high
+
+    - id: device_identifier
+      label: Device Identifier
+      description: MAC addresses, IMEI numbers, device UUIDs, or hardware fingerprints.
+      priority: medium
+
+    - id: organization
+      label: Organization / Company Name
+      description: Named businesses, agencies, or groups referenced in context.
+      priority: medium
+
+    - id: date_time
+      label: Date / Time Reference
+      description: Specific dates or timestamps relevant to events or actions described.
+      priority: medium
+
+osint_notes:
+  intent:
+    label: Intent Classification
+    description: Overall purpose or goal inferred from the text.
+    categories:
+      - value: fraud
+        triggers: ["wire transfer", "advance fee", "lottery", "verify your account", "urgent payment"]
+      - value: harassment
+        triggers: ["I will ruin you", "you'll regret", "I know where you", "keep watching"]
+      - value: extortion
+        triggers: ["pay or", "send funds", "or I release", "you have 24 hours", "unless you pay"]
+      - value: recruitment
+        triggers: ["join us", "work for us", "we are hiring", "become a member", "earn money from home"]
+      - value: covert_coordination
+        triggers: ["meet at", "switch to", "use this channel", "delete after reading", "don't tell anyone"]
+      - value: benign
+        triggers: []
+        note: Default when no threat indicators are present.
+      - value: unknown
+        triggers: []
+        note: Apply when intent cannot be determined with reasonable confidence.
+
+  tone:
+    label: Tone Classification
+    description: Emotional register or communication style of the author.
+    categories:
+      - value: aggressive
+        triggers: ["threatening language", "profanity directed at subject", "explicit harm statements"]
+      - value: deceptive
+        triggers: ["false urgency", "impersonation indicators", "inconsistent claims", "too-good-to-be-true offers"]
+      - value: coercive
+        triggers: ["ultimatums", "deadlines tied to harm", "blackmail language"]
+      - value: neutral
+        triggers: []
+        note: Default when no strong emotional register is detected.
+      - value: manipulative
+        triggers: ["flattery combined with requests", "guilt-tripping", "manufactured sympathy"]
+
+  stance:
+    label: Stance Classification
+    description: The posture of the author relative to the recipient.
+    categories:
+      - value: seeking_information
+        triggers: ["can you tell me", "do you know", "what is your", "find out", "locate"]
+      - value: issuing_demand
+        triggers: ["you must", "do it now", "send immediately", "comply or"]
+      - value: promotional
+        triggers: ["click here", "limited offer", "exclusive deal", "sign up now"]
+      - value: instructional
+        triggers: ["follow these steps", "install this", "run the following", "download and execute"]
+      - value: confessional
+        triggers: ["I did", "we conducted", "I was responsible", "I have access to"]
+
+warning_categories:
+  - id: threat
+    label: Threat of Violence or Harm
+    severity: high
+    triggers: ["I will hurt", "you're dead", "watch your back", "harm will come", "make you pay"]
+    guidance: Preserve full message thread. Escalate to legal or law enforcement immediately.
+
+  - id: extortion
+    label: Extortion / Blackmail
+    severity: high
+    triggers: ["pay or I release", "send crypto", "or I expose", "you have hours to comply"]
+    guidance: Do not engage sender. Preserve evidence. Escalate with full artifact log.
+
+  - id: fraud
+    label: Fraud / Scam
+    severity: high
+    triggers: ["advance fee", "transfer funds", "verify your account", "you have won", "unclaimed funds"]
+    guidance: Flag financial artifacts. Cross-reference sending infrastructure. Report to relevant fraud body.
+
+  - id: doxxing
+    label: Doxxing / Personal Exposure
+    severity: high
+    triggers: ["home address", "I know where you live", "here is your info", "exposing your details"]
+    guidance: Identify all PII surfaced. Assess exposure risk. Escalate if subject is at physical risk.
+
+  - id: phishing_malware
+    label: Phishing / Malware Distribution
+    severity: high
+    triggers: ["verify your credentials", "your account is suspended", "download and run", "enable macros", "password reset link", "login to avoid suspension"]
+    guidance: Sandbox all URLs and attachments. Do not click. Submit domains for reputation lookup.
+
+  - id: illegal_activity
+    label: Illegal Activity Reference
+    severity: high
+    triggers: ["selling drugs", "drug shipment", "buy weapons illegally", "illegal firearm sale", "exploit the system", "darknet market", "illegal access", "stolen credentials", "CSAM"]
+    guidance: Preserve as-is. Do not distribute. Escalate to appropriate legal authority.
+
+  - id: harassment
+    label: Targeted Harassment
+    severity: medium
+    triggers: ["I'll tell everyone", "ruining your reputation", "spreading your info", "everyone will know"]
+    guidance: Document pattern of contact. Identify sender artifacts. Recommend platform reporting.
+
+  - id: covert_coordination
+    label: Covert or Evasive Coordination
+    severity: medium
+    triggers: ["delete this", "use encrypted", "don't let them know", "off the record channel"]
+    guidance: Note communication hygiene indicators. Flag for pattern analysis across messages.
+
+  - id: self_harm
+    label: Self-Harm or Suicide Indication
+    severity: high
+    triggers: ["I want to die", "ending it", "no reason to live", "goodbye forever", "last message"]
+    guidance: Escalate to welfare or crisis response team immediately. Do not delay for investigation process.
+
+pivot_rules:
+  email:
+    actions:
+      - Search email across breach databases (e.g., HIBP, Dehashed)
+      - Reverse lookup for associated accounts or registrations
+      - Check domain of email for WHOIS and infrastructure links
+
+  phone:
+    actions:
+      - Carrier and region lookup via public phone intelligence tools
+      - Search for associated social accounts or listings
+      - Cross-reference with known fraud or spam databases
+
+  username:
+    actions:
+      - Run cross-platform username search (e.g., Sherlock, WhatsMyName)
+      - Review public profile activity and linked accounts
+      - Check for reuse across breach datasets
+
+  domain:
+    actions:
+      - WHOIS and registration history lookup
+      - Check DNS records and hosting infrastructure
+      - Search for associated subdomains and certificates (e.g., crt.sh)
+
+  ip_address:
+    actions:
+      - Geolocation and ASN lookup
+      - Check against threat intelligence feeds and abuse databases
+      - Correlate with known hosting providers or VPN/proxy services
+
+  crypto_address:
+    actions:
+      - Trace transactions via public blockchain explorer
+      - Check address against known scam or sanctions lists
+      - Identify clustering with related wallets if possible
+
+  full_name:
+    actions:
+      - Search across public records and social platforms
+      - Cross-reference with other artifacts in the same message
+
+  physical_address:
+    actions:
+      - Verify via mapping tools and satellite imagery
+      - Cross-reference with named individuals or organizations in text
+
+  organization:
+    actions:
+      - Check registration and corporate records
+      - Search for associated individuals, domains, or complaints
+
+response_structure:
+  enforce: true
+  format: structured_sections
+  note: All sections must appear in the order listed. Omit only if explicitly not applicable. Keep content brief and investigator-focused.
+
+  sections:
+    - id: language_detection
+      label: Language Detected
+      description: State the detected language(s) of the input text (e.g., English, Mandarin, Arabic). Note mixed-language if applicable.
+
+    - id: translation
+      label: Translation
+      description: Provide a full translation if the source language differs from the investigator's session language. Omit if already in the investigator's language.
+
+    - id: key_artifacts
+      label: Key Artifacts Identified
+      description: >
+        List all high-value intelligence and PII identified in the text.
+        Group by highlight category, avoid duplication, and include exact values as found.
+        For high-priority artifacts, include a brief line explaining why the artifact is pivotal.
+        Do not redact.
+
+    - id: osint_notes
+      label: OSINT Notes
+      description: >
+        State the assessed Intent, Tone, and Stance. Add a one-line Sentiment summary.
+        Keep each field to one or two words with a brief supporting rationale.
+
+    - id: content_warnings
+      label: Content Warnings
+      description: >
+        List any triggered warning categories with severity.
+        Include a one-line investigator guidance note per warning.
+        Trigger warnings only when the text contains direct indicators, not vague topic mentions.
+        Omit section entirely if no warnings are triggered.
+
+    - id: recommended_pivots
+      label: Recommended Pivots
+      description: >
+        List actionable investigative next steps keyed to identified artifacts.
+        Lead with the highest-priority artifacts first.
+        Use only passive, OSINT-appropriate actions. Group by artifact type.

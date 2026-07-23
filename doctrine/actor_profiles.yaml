@@ -1,0 +1,323 @@
+version: "1.0"
+description: "Actor role profiles for OSINT decision-support. Defines risk modifiers, oversight expectations, and documentation requirements based on investigator role context."
+
+disclaimer:
+  - "This file provides decision-support guidance only and is not legal advice."
+  - "Users must comply with all applicable laws, regulations, and organizational policies."
+  - "Role-based profiles do not confer authority or replace professional judgment."
+  - "Consult qualified legal counsel for authorization and compliance questions."
+
+default_policy:
+  unknown_actor_role:
+    risk_modifier: 2
+    oversight_recommended: true
+    notes:
+      - "Unknown or unspecified roles receive elevated risk classification"
+      - "Recommend explicit role identification before proceeding with sensitive methods"
+      - "Default to most restrictive documentation and oversight requirements"
+
+actor_profiles:
+  private_individual:
+    display_name: "Private Individual"
+    risk_modifier: 2
+    oversight_recommended: true
+    notes:
+      - "No professional licensing or institutional oversight"
+      - "Higher risk of crossing legal boundaries without institutional safeguards"
+      - "Personal investigations may involve conflicts of interest or emotional bias"
+    common_constraints:
+      - "no_pretexting_or_deception"
+      - "public_sources_only"
+      - "respect_platform_terms_of_service"
+      - "no_harassment_or_contact"
+    recommended_documentation:
+      - "Clear statement of purpose and legitimate interest"
+      - "Log of all sources accessed with timestamps"
+      - "Record of decisions to not pursue certain methods"
+      - "Evidence preservation chain if findings may be used officially"
+    escalation_triggers:
+      - "Considering any form of direct contact with subject"
+      - "Encountering information suggesting ongoing criminal activity"
+      - "Temptation to use deceptive identities or pretexting"
+      - "Information involves minors or vulnerable populations"
+      - "Findings may affect legal proceedings or employment decisions"
+
+  student_hobbyist:
+    display_name: "Student / Hobbyist"
+    risk_modifier: 2
+    oversight_recommended: true
+    notes:
+      - "Educational context does not reduce legal or ethical obligations"
+      - "Academic projects require institutional review for human subjects research"
+      - "Skill-building exercises must not create real-world harm or privacy violations"
+    common_constraints:
+      - "public_sources_only"
+      - "no_contact_with_subjects"
+      - "respect_platform_terms_of_service"
+      - "institutional_review_for_research"
+    recommended_documentation:
+      - "Educational purpose statement or research question"
+      - "Faculty advisor or mentor acknowledgment (if applicable)"
+      - "IRB approval or exemption determination (for research)"
+      - "Source methodology and limitations disclosure"
+      - "Data handling and anonymization procedures"
+    escalation_triggers:
+      - "Project scope expanding beyond original educational purpose"
+      - "Considering publication or sharing of findings involving identifiable persons"
+      - "Uncertainty about institutional review requirements"
+      - "Discovery of information requiring mandatory reporting"
+      - "Temptation to demonstrate capabilities through invasive techniques"
+
+  licensed_investigator:
+    display_name: "Licensed Private Investigator"
+    risk_modifier: 1
+    oversight_recommended: false
+    notes:
+      - "Subject to state licensing requirements and continuing education"
+      - "Professional liability and regulatory oversight mechanisms exist"
+      - "Authority limited by jurisdiction and licensing scope"
+      - "Client relationship creates fiduciary and confidentiality duties"
+    common_constraints:
+      - "comply_with_licensing_jurisdiction_rules"
+      - "maintain_client_confidentiality"
+      - "document_billable_hours_and_methods"
+      - "avoid_unlicensed_practice_across_state_lines"
+    recommended_documentation:
+      - "Client engagement letter or contract"
+      - "Scope of work authorization"
+      - "Detailed investigative report with sources cited"
+      - "Billing records reflecting time and methods used"
+      - "Chain of custody for any evidence collected"
+      - "Licensing compliance checklist for jurisdiction"
+    escalation_triggers:
+      - "Client requests methods prohibited by licensing rules"
+      - "Investigation crossing into jurisdiction without reciprocal license"
+      - "Discovering information requiring law enforcement referral"
+      - "Conflict of interest with client objectives"
+      - "Request to testify or produce records in legal proceeding"
+
+  corporate_security:
+    display_name: "Corporate Security / Insider Threat"
+    risk_modifier: 1
+    oversight_recommended: true
+    notes:
+      - "Authority limited to legitimate business interests and employment context"
+      - "Must balance security needs with employee privacy expectations"
+      - "Subject to organizational policies and potential union agreements"
+      - "Legal department coordination often required for invasive methods"
+    common_constraints:
+      - "legitimate_business_purpose_required"
+      - "comply_with_employee_privacy_laws"
+      - "coordinate_with_legal_and_hr"
+      - "document_authorization_chain"
+    recommended_documentation:
+      - "Written authorization from appropriate executive level"
+      - "Statement of legitimate business purpose"
+      - "Coordination record with legal and HR departments"
+      - "Incident or threat report triggering investigation"
+      - "Findings report with recommendations"
+      - "Data retention and destruction schedule"
+    escalation_triggers:
+      - "Investigation expanding beyond original authorized scope"
+      - "Considering surveillance of employee off-duty activities"
+      - "Findings suggest criminal activity requiring law enforcement referral"
+      - "Employee may have union representation or legal counsel"
+      - "Cross-border investigation implicating foreign privacy laws"
+      - "Monitoring communications that may include privileged content"
+
+  journalist:
+    display_name: "Journalist / News Media"
+    risk_modifier: 1
+    oversight_recommended: false
+    notes:
+      - "Editorial oversight and publication standards provide accountability"
+      - "First Amendment protections do not exempt from generally applicable laws"
+      - "Ethical codes emphasize transparency, minimizing harm, and source protection"
+    common_constraints:
+      - "public_interest_justification_required"
+      - "minimize_harm_to_vulnerable_subjects"
+      - "transparent_about_journalist_status"
+      - "protect_confidential_sources"
+    recommended_documentation:
+      - "Editorial assignment or pitch approval"
+      - "Public interest justification for investigation"
+      - "Source verification and corroboration records"
+      - "Fact-checking and editorial review trail"
+      - "Decisions regarding anonymization or redaction"
+      - "Legal review for high-risk publications"
+    escalation_triggers:
+      - "Considering deceptive methods or undercover techniques"
+      - "Subject is a minor or vulnerable person"
+      - "Information may expose confidential sources"
+      - "Potential for defamation or privacy tort claims"
+      - "Government classification or national security implications"
+      - "Source requests anonymity or expresses safety concerns"
+
+  academic_researcher:
+    display_name: "Academic Researcher"
+    risk_modifier: 0
+    oversight_recommended: true
+    notes:
+      - "Subject to Institutional Review Board oversight for human subjects research"
+      - "Publication and peer review provide transparency and accountability"
+      - "Ethical obligations include informed consent and minimizing research risks"
+    common_constraints:
+      - "irb_approval_or_exemption_required"
+      - "informed_consent_when_applicable"
+      - "data_anonymization_and_security"
+      - "transparent_methodology_for_replication"
+    recommended_documentation:
+      - "IRB approval or exemption determination letter"
+      - "Research protocol and methodology description"
+      - "Informed consent forms (if applicable)"
+      - "Data management and security plan"
+      - "Publication plan and anonymization procedures"
+      - "Funding source disclosures and conflict of interest statements"
+    escalation_triggers:
+      - "Research expanding beyond IRB-approved scope"
+      - "Inadvertent collection of identifiable or sensitive personal data"
+      - "Discovery of illegal activity or mandatory reporting situation"
+      - "Subject requests withdrawal from study"
+      - "Cross-border research implicating foreign regulations"
+      - "Uncertainty about human subjects research classification"
+
+  ngo_humanitarian:
+    display_name: "NGO / Humanitarian Organization"
+    risk_modifier: 0
+    oversight_recommended: true
+    notes:
+      - "Mission-driven work requires balancing information needs with do-no-harm principles"
+      - "Operating in conflict zones or repressive regimes increases risk to subjects and staff"
+      - "Organizational accountability through boards, donors, and international standards"
+    common_constraints:
+      - "do_no_harm_principle"
+      - "informed_consent_when_feasible"
+      - "data_protection_for_vulnerable_populations"
+      - "comply_with_local_and_international_law"
+    recommended_documentation:
+      - "Organizational authorization and mission alignment statement"
+      - "Risk assessment for subjects and staff"
+      - "Data protection and security measures"
+      - "Informed consent procedures (adapted to context)"
+      - "Findings report with anonymization"
+      - "Coordination records with other humanitarian actors"
+    escalation_triggers:
+      - "Information gathering may endanger beneficiaries or staff"
+      - "Uncertainty about consent in vulnerable or coercive contexts"
+      - "Discovery of human rights abuses requiring documentation"
+      - "Host government restrictions on information activities"
+      - "Data sharing requests from governments or armed groups"
+      - "Potential misuse of findings to harm population served"
+
+  legal_team:
+    display_name: "Legal Team / Compliance Officer"
+    risk_modifier: 0
+    oversight_recommended: false
+    notes:
+      - "Attorney-client privilege and work product protections apply to authorized legal investigations"
+      - "Regulatory compliance investigations may have specific procedural requirements"
+      - "High documentation standards for potential litigation or regulatory proceedings"
+    common_constraints:
+      - "privileged_work_requires_attorney_supervision"
+      - "comply_with_discovery_and_evidence_rules"
+      - "maintain_chain_of_custody"
+      - "avoid_spoliation_of_evidence"
+    recommended_documentation:
+      - "Attorney engagement letter or in-house counsel authorization"
+      - "Privileged work product designations"
+      - "Chain of custody for all evidence collected"
+      - "Source authentication and verification records"
+      - "Preservation notices and litigation hold documentation"
+      - "Expert consultant engagement records (if applicable)"
+    escalation_triggers:
+      - "Opposing counsel makes discovery requests"
+      - "Investigation implicates attorney ethics rules"
+      - "Considering methods that may waive privilege"
+      - "Discovery of evidence requiring immediate preservation"
+      - "Criminal conduct discovery requiring disclosure"
+      - "Uncertainty about privilege or work product protection"
+
+  law_enforcement:
+    display_name: "Law Enforcement"
+    risk_modifier: 0
+    oversight_recommended: true
+    notes:
+      - "Authority and permissible methods vary significantly by jurisdiction and agency policy"
+      - "Constitutional protections and statutory constraints apply to government investigations"
+      - "This tool does not confer or interpret law enforcement authority"
+      - "Users must follow agency policy, legal counsel guidance, and applicable law"
+    common_constraints:
+      - "follow_agency_policy_and_legal_counsel"
+      - "comply_with_constitutional_limitations"
+      - "document_for_evidentiary_standards"
+      - "obtain_appropriate_legal_process_when_required"
+    recommended_documentation:
+      - "Case file documentation per agency standards"
+      - "Investigative authority or assignment record"
+      - "Legal process (warrants, subpoenas, court orders) where required"
+      - "Chain of custody for all evidence"
+      - "Consultation records with prosecutors or agency counsel"
+      - "Compliance with agency oversight and review procedures"
+    escalation_triggers:
+      - "Uncertainty about legal authority for proposed method"
+      - "Considering methods requiring judicial authorization"
+      - "Cross-jurisdictional investigation requiring coordination"
+      - "First Amendment protected activity implicated"
+      - "Exigent circumstances requiring immediate action"
+      - "Any uncertainty about constitutional or statutory limitations"
+
+  incident_response:
+    display_name: "Incident Response / Threat Intelligence"
+    risk_modifier: 0
+    oversight_recommended: false
+    notes:
+      - "Time-sensitive security response requires documented authorization and scope"
+      - "Intelligence gathering must distinguish defensive from offensive activities"
+      - "Cross-border threat intelligence may implicate foreign law and attribution risks"
+    common_constraints:
+      - "documented_incident_or_threat_justification"
+      - "comply_with_cfaa_and_unauthorized_access_laws"
+      - "distinguish_defensive_from_offensive_actions"
+      - "coordinate_with_legal_for_law_enforcement_referral"
+    recommended_documentation:
+      - "Incident declaration or threat intelligence tasking"
+      - "Authorization for investigation scope and methods"
+      - "Technical findings report with indicators of compromise"
+      - "Timeline of investigative actions taken"
+      - "Attribution assessment with confidence levels"
+      - "Legal review for law enforcement referral or disclosure"
+    escalation_triggers:
+      - "Considering active engagement with threat actor infrastructure"
+      - "Attribution uncertainty or potential for misidentification"
+      - "Threat actor activity targeting critical infrastructure"
+      - "Evidence of nation-state or advanced persistent threat"
+      - "Victim notification or disclosure decisions"
+      - "Cross-border investigation or threat actor attribution"
+
+  threat_intelligence_analyst:
+    display_name: "Threat Intelligence Analyst"
+    risk_modifier: 0
+    oversight_recommended: false
+    notes:
+      - "Focus on adversary capabilities, infrastructure, and campaigns"
+      - "Must maintain clear distinction between intelligence collection and active operations"
+      - "Sharing intelligence requires consideration of attribution confidence and source protection"
+    common_constraints:
+      - "passive_collection_methods_preferred"
+      - "no_unauthorized_access_to_systems"
+      - "protect_intelligence_sources_and_methods"
+      - "confidence_levels_required_for_attribution"
+    recommended_documentation:
+      - "Intelligence requirements or tasking documentation"
+      - "Source reliability and confidence assessments"
+      - "Technical indicators and observables with context"
+      - "Attribution analysis with supporting evidence"
+      - "Dissemination controls and handling caveats"
+      - "Coordination records with peer organizations"
+    escalation_triggers:
+      - "Considering interaction with adversary infrastructure"
+      - "Uncertainty about attribution or potential false flags"
+      - "Intelligence suggests imminent threat to life or critical systems"
+      - "Sharing request from law enforcement or government"
+      - "Discovery of vulnerabilities in third-party systems"
+      - "Cross-border collection implicating foreign jurisdiction"

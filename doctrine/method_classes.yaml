@@ -1,0 +1,198 @@
+version: "1.0"
+description: "METHOD CLASSES define broad categories of OSINT collection approaches based on interaction level, data sensitivity, and authorization requirements. Used to gate recommendations and adjust risk scoring in decision-support workflows."
+disclaimer:
+  - "This file provides decision-support guidance only and is NOT legal advice."
+  - "Users are solely responsible for compliance with applicable laws, regulations, and organizational policies."
+  - "Method classification does not constitute authorization to perform any action."
+  - "Always obtain proper authorization and consult qualified legal counsel before conducting investigations."
+
+default_policy:
+  unknown_method_class:
+    risk_modifier: 2
+    notes:
+      - "Applied when method cannot be confidently classified."
+      - "Conservative fallback to prevent unintended escalation."
+      - "User should explicitly classify method or seek guidance."
+
+method_classes:
+  passive_only:
+    display_name: "Passive Only"
+    risk_modifier: -1
+    interaction_level: "none"
+    data_sensitivity: "low"
+    notes:
+      - "Non-interactive observation of publicly accessible information."
+      - "No direct or indirect contact with target, platform, or systems."
+      - "Minimal footprint and lowest risk profile."
+      - "Suitable for preliminary research and open-source review."
+    examples:
+      - "Review of publicly indexed websites and cached pages"
+      - "Examination of published government records and filings"
+      - "Analysis of publicly available social media profiles without interaction"
+      - "Review of archived public content via third-party aggregators"
+    common_risks:
+      - "Misinterpretation of incomplete or outdated information"
+      - "Attribution errors if sources lack provenance verification"
+      - "Platform terms of service may still restrict certain passive uses"
+    requires:
+      - "Clear understanding of what constitutes 'public' in relevant jurisdiction"
+      - "Documentation of sources and collection timestamps"
+    prohibited_if:
+      - "Information is clearly marked as private or restricted"
+      - "Access requires authentication or bypassing access controls"
+
+  passive_plus:
+    display_name: "Passive Plus"
+    risk_modifier: 0
+    interaction_level: "low"
+    data_sensitivity: "medium"
+    notes:
+      - "Expanded passive collection including broader aggregation and archival analysis."
+      - "May involve systematic collection from multiple public sources."
+      - "Still non-interactive but higher volume or scope than basic passive methods."
+      - "Requires attention to cumulative privacy impact."
+    examples:
+      - "Systematic review of multiple public databases for correlation"
+      - "Use of archived snapshots and historical public records"
+      - "Cross-referencing publicly available datasets"
+      - "Analysis of public business registries and professional directories"
+    common_risks:
+      - "Platform rate limiting or access restrictions due to volume"
+      - "Aggregation may reveal sensitive patterns not apparent in individual records"
+      - "Terms of service violations through systematic collection"
+      - "Privacy concerns from mosaic effect of combined public data"
+    requires:
+      - "Review of applicable platform terms of service"
+      - "Assessment of proportionality and necessity"
+      - "Documentation of legitimate purpose"
+    prohibited_if:
+      - "Investigation target is high-risk or protected class without authorization"
+      - "Passive-only constraint is explicitly set"
+      - "Systematic collection prohibited by platform policy"
+
+  active_interaction:
+    display_name: "Active Interaction"
+    risk_modifier: 2
+    interaction_level: "medium"
+    data_sensitivity: "medium"
+    notes:
+      - "Methods involving direct or indirect interaction that may notify target or platform."
+      - "Includes actions that generate logs, alerts, or observable footprints."
+      - "Significant escalation from passive methods."
+      - "Requires heightened authorization and operational security awareness."
+    examples:
+      - "Direct communication or contact with subjects"
+      - "Platform interactions that may generate notifications"
+      - "Actions requiring authentication or account creation"
+      - "Requests for information that create records"
+    common_risks:
+      - "Target or third parties may become aware of investigation"
+      - "Platform may flag or restrict account for suspicious activity"
+      - "Legal exposure if interaction violates anti-harassment or privacy laws"
+      - "Destruction or concealment of evidence by alerted targets"
+      - "Reputational harm to investigators or organization"
+    requires:
+      - "Explicit authorization documented in writing"
+      - "Legal review of proposed interaction methods"
+      - "Operational security plan to manage exposure risk"
+      - "Clear legitimate investigative purpose"
+    prohibited_if:
+      - "Passive-only constraint is set"
+      - "No authorization has been obtained"
+      - "Investigation involves protected individuals without proper legal basis"
+      - "Method would constitute harassment, impersonation, or deception"
+
+  automation_bulk:
+    display_name: "Automation and Bulk Collection"
+    risk_modifier: 3
+    interaction_level: "high"
+    data_sensitivity: "high"
+    notes:
+      - "Automated or high-volume collection methods including scraping and bulk queries."
+      - "High likelihood of platform detection and countermeasures."
+      - "Significant legal and policy compliance burden."
+      - "May require technical controls to prevent misuse."
+    examples:
+      - "Automated scraping of public websites at scale"
+      - "Bulk API queries and data exports"
+      - "Programmatic collection across multiple platforms"
+      - "Systematic enumeration of public resources"
+    common_risks:
+      - "Platform terms of service violations and account termination"
+      - "IP blocking or legal action by platform operators"
+      - "Regulatory violations under data protection laws"
+      - "Disproportionate privacy impact from mass collection"
+      - "Attribution and quality control challenges with large datasets"
+    requires:
+      - "Explicit authorization from appropriate authority"
+      - "Legal review confirming compliance with applicable regulations"
+      - "Technical controls to ensure collection remains within authorized scope"
+      - "Data retention and security policies"
+      - "Regular oversight and audit mechanisms"
+    prohibited_if:
+      - "Passive-only constraint is set"
+      - "No authorization has been obtained"
+      - "Platform terms explicitly prohibit automated access"
+      - "Investigation tier is classified as high-risk without appropriate safeguards"
+      - "Data protection laws prohibit bulk collection for stated purpose"
+
+  intrusive_access:
+    display_name: "Intrusive Access"
+    risk_modifier: 4
+    interaction_level: "high"
+    data_sensitivity: "high"
+    notes:
+      - "Methods attempting access to non-public data, restricted systems, or protected information."
+      - "Highest risk category requiring extraordinary authorization."
+      - "May involve legal process, warrants, or formal agreements."
+      - "Strict oversight and documentation mandatory."
+    examples:
+      - "Attempts to access password-protected or restricted content"
+      - "Use of privileged credentials or insider access"
+      - "Technical methods to bypass access controls"
+      - "Collection requiring legal process or court order"
+    common_risks:
+      - "Criminal liability for unauthorized access"
+      - "Civil liability for privacy violations or trespass to chattels"
+      - "Evidence suppression if collected without proper authorization"
+      - "Severe reputational and organizational harm"
+      - "Escalation to law enforcement investigation of investigators"
+    requires:
+      - "Explicit legal authorization such as warrant or court order"
+      - "Involvement of qualified legal counsel"
+      - "Strict chain of custody and evidence handling procedures"
+      - "Clear nexus to legitimate law enforcement or authorized security purpose"
+      - "Compliance with all applicable laws and regulations"
+    prohibited_if:
+      - "Passive-only constraint is set"
+      - "Active-interaction constraint is set"
+      - "No legal authorization exists"
+      - "Investigation is civil or non-law-enforcement without proper legal basis"
+      - "Target is private individual without extraordinary justification"
+      - "Method would violate computer fraud, wiretapping, or privacy statutes"
+
+  unknown:
+    display_name: "Unknown or Unclassified"
+    risk_modifier: 2
+    interaction_level: "medium"
+    data_sensitivity: "medium"
+    notes:
+      - "Default classification when method cannot be reliably categorized."
+      - "Conservative risk modifier applied pending proper classification."
+      - "Should trigger request for user clarification or expert review."
+    examples:
+      - "Novel techniques not yet evaluated"
+      - "Ambiguous methods spanning multiple categories"
+      - "Third-party services with unclear operational characteristics"
+    common_risks:
+      - "Unpredictable outcomes due to lack of established precedent"
+      - "Difficulty assessing legal and policy compliance"
+      - "Potential for unintended escalation or exposure"
+    requires:
+      - "Explicit classification by qualified personnel before proceeding"
+      - "Conservative risk assessment until properly categorized"
+      - "Documentation of rationale for method selection"
+    prohibited_if:
+      - "High-risk tier is set without explicit approval"
+      - "Passive-only or other restrictive constraints are active"
+      - "Method cannot be adequately described or assessed for risks"

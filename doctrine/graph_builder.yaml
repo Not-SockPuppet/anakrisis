@@ -1,0 +1,161 @@
+meta:
+  name: GraphBuilder Doctrine
+  version: 1.0.0
+  purpose: Define entity extraction, relationship mapping, confidence assignment, and output structure for OSINT graph analysis
+  scope: Relationship mapping only. Visualization, storage, and rendering are out of scope.
+  principles:
+    - Correlation is not attribution
+    - Preserve uncertainty
+    - Evidence-driven assignments
+    - Conservative confidence by default
+    - Audit-friendly reasoning
+
+node_types:
+  person:
+    label: Person
+    description: A named or unnamed individual referenced in investigative material
+  username:
+    label: Username
+    description: A handle or alias used on any platform or service
+  email:
+    label: Email Address
+    description: An electronic mail address associated with an account or communication
+  phone:
+    label: Phone Number
+    description: A telephone number linked to a person, account, or organization
+  domain:
+    label: Domain
+    description: A registered internet domain name
+  ip_address:
+    label: IP Address
+    description: An IPv4 or IPv6 address observed in infrastructure or communications
+  company:
+    label: Company
+    description: A registered commercial entity
+  organization:
+    label: Organization
+    description: A non-commercial group, association, or collective
+  cryptocurrency_address:
+    label: Cryptocurrency Address
+    description: A blockchain wallet or transaction address
+  social_account:
+    label: Social Account
+    description: A profile or account on a social media or messaging platform
+  website:
+    label: Website
+    description: A specific URL or web property distinct from its domain
+  location:
+    label: Location
+    description: A physical or geographic location including addresses, cities, or regions
+
+relationship_types:
+  uses:
+    label: Uses
+    description: An entity employs or operates another entity
+  owns:
+    label: Owns
+    description: An entity holds registered or documented ownership of another entity
+  controls:
+    label: Controls
+    description: An entity exercises operational or administrative authority over another
+  references:
+    label: References
+    description: An entity mentions or links to another entity without confirmed association
+  communicates_with:
+    label: Communicates With
+    description: Two entities have exchanged communications via a documented channel
+  associated_with:
+    label: Associated With
+    description: Two entities appear together across sources without a defined relationship type
+  linked_to:
+    label: Linked To
+    description: A technical or contextual connection exists between two entities
+  member_of:
+    label: Member Of
+    description: An entity belongs to a group, organization, or collective
+  employee_of:
+    label: Employee Of
+    description: A person is documented as working for a company or organization
+  parent_of:
+    label: Parent Of
+    description: A documented familial parent relationship between two persons
+  spouse_of:
+    label: Spouse Of
+    description: A documented spousal or domestic partner relationship
+  sibling_of:
+    label: Sibling Of
+    description: A documented sibling relationship between two persons
+  possible_match:
+    label: Possible Match
+    description: Two entities may represent the same subject based on partial indicators
+
+confidence_levels:
+  confirmed:
+    definition: Relationship is directly supported by explicit, verifiable evidence
+    evidence_requirement: At least one primary source explicitly documents the relationship with no contradicting evidence
+  probable:
+    definition: Relationship is strongly suggested but not fully verified
+    evidence_requirement: Multiple corroborating indicators present; no direct confirmation; no contradicting evidence
+  possible:
+    definition: Relationship is claimed, inferred, or loosely suggested
+    evidence_requirement: Single indicator, unverified claim, or circumstantial pattern only; requires active verification
+
+graph_rules:
+  - Treat each entity and relationship as independent until evidence supports connection
+  - Do not conflate correlation with attribution
+  - Assign the lowest defensible confidence level when evidence is ambiguous
+  - Preserve full relationship chains even when intermediate links are unconfirmed
+  - Record at least one piece of supporting evidence for every mapped relationship
+  - Flag any relationship inferred from a single source or indicator for verification
+  - Do not merge entities into a single node without explicit confirmation of identity
+  - Maintain distinction between what is documented and what is inferred
+  - Surface contradictory evidence rather than suppress it
+
+analyst_observations:
+  purpose: Surface noteworthy patterns for investigator review. Observations are informational only and do not constitute conclusions.
+  observe:
+    - Shared usernames or handles across platforms
+    - Reuse of email prefixes across different domains
+    - Shared registrant details across multiple domains
+    - Repeated infrastructure references such as IPs or hosting providers
+    - Multi-hop connection chains between distant entities
+    - Naming conventions suggesting a common actor or template
+    - Unusual or layered ownership structures
+    - Cryptocurrency addresses appearing across multiple contexts
+    - Temporal clustering of account creation or activity
+    - Entities appearing in both personal and organizational contexts
+
+response_structure:
+  order:
+    - entities_identified
+    - relationships
+    - confidence_assessment
+    - supporting_evidence
+    - analyst_observations
+    - verification_needed
+    - recommended_pivots
+    - obsidian_graph_note
+
+  entities_identified:
+    description: List all extracted entities with their node type, label, and any observed aliases or alternate identifiers
+
+  relationships:
+    description: List all mapped relationships using the format SOURCE -> RELATIONSHIP_TYPE -> TARGET with confidence level assigned
+
+  confidence_assessment:
+    description: For each relationship, state the assigned confidence level and the primary reason for that assignment
+
+  supporting_evidence:
+    description: For each relationship, cite the specific source text, document, or data point that supports it
+
+  analyst_observations:
+    description: List noteworthy patterns, reuse indicators, or structural anomalies observed across the entity set. Do not draw conclusions.
+
+  verification_needed:
+    description: List relationships or entity attributions that require external verification before confidence can be raised
+
+  recommended_pivots:
+    description: Suggest specific investigative next steps such as WHOIS queries, platform lookups, or cross-reference checks based on observed entities
+
+  obsidian_graph_note:
+    description: Generate a concise markdown relationship note suitable for storage in an Obsidian case workspace. Use wikilink format for entities. Include a brief summary, entity list, and relationship list in plain markdown without frontmatter.

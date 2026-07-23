@@ -1,0 +1,232 @@
+version: "1.0"
+description: "High-level jurisdictional risk modifiers for OSINT operations. Not legal advice."
+# NOTE: These jurisdiction modifiers are advisory; they only affect risk scoring if the server explicitly integrates them.
+
+# Intended semantics: `risk_modifier` is an additive adjustment to the base risk score before tier mapping.
+
+modifier_scale:
+  0: "Baseline regulatory environment; standard compliance obligations apply."
+  1: "Moderate additional regulatory complexity or sector-specific obligations."
+  2: "Elevated regulatory, geopolitical, or enforcement risk; legal review advised."
+  3: "High regulatory or geopolitical sensitivity; legal review mandatory before proceeding."
+
+stacking_policy:
+  description: "Jurisdiction risk modifiers are additive to base risk score before tier mapping."
+  rules:
+    - "If a subregion is specified, its risk_modifier replaces the parent country modifier."
+    - "If jurisdiction is unknown, unknown_jurisdiction policy applies and replaces other modifiers."
+    - "Jurisdiction modifiers stack additively with actor and method modifiers unless capped by global scoring logic."
+    - "Escalation_required triggers governance review independent of final numeric tier."
+
+disclaimer:
+  - "This file provides general risk awareness only and is not legal advice."
+  - "Laws vary significantly by jurisdiction and change frequently."
+  - "Always consult qualified legal counsel before conducting investigations."
+  - "Risk modifiers are conservative estimates and may not reflect current conditions."
+  - "Escalation to legal review is recommended when indicated."
+
+default_policy:
+  unknown_jurisdiction:
+    risk_modifier: 2
+    escalation_required: true
+    notes:
+      - "Jurisdiction not recognized or insufficient information provided."
+      - "Default to elevated caution and require legal review before proceeding."
+
+countries:
+  united_states:
+    display_name: "United States"
+    risk_modifier: 0
+    escalation_required: false
+    notes:
+      - "Laws vary significantly by state and federal/state interplay."
+      - "Data broker regulations, privacy laws, and computer fraud statutes differ by state."
+      - "Some activities may require licensing or compliance with sector-specific rules."
+    special_flags:
+      - "state_variation_high"
+      - "data_broker_regulation"
+    subregion_prompt: "Specify state for refined risk assessment."
+    subregions:
+      california:
+        display_name: "California"
+        risk_modifier: 1
+        escalation_required: false
+        notes:
+          - "CCPA and related privacy regulations apply to certain data handling."
+          - "Consumer privacy protections may affect permissible data collection."
+        special_flags:
+          - "data_protection_strict"
+      texas:
+        display_name: "Texas"
+        risk_modifier: 0
+        escalation_required: false
+        notes:
+          - "Regulatory environment generally moderate for OSINT activities."
+          - "Verify compliance with state-level data protection and PI licensing rules."
+        special_flags: []
+      new_york:
+        display_name: "New York"
+        risk_modifier: 1
+        escalation_required: false
+        notes:
+          - "SHIELD Act and sector-specific privacy rules may apply."
+          - "Private investigation licensing may be required for certain activities."
+        special_flags:
+          - "licensing_requirements"
+
+  canada:
+    display_name: "Canada"
+    risk_modifier: 0
+    escalation_required: false
+    notes:
+      - "PIPEDA and provincial privacy laws may apply to personal information handling."
+      - "Federal and provincial regulations vary; cross-border data considerations exist."
+      - "Seek counsel on applicability of privacy and cybersecurity frameworks."
+    special_flags:
+      - "data_protection_moderate"
+      - "provincial_variation"
+
+  united_kingdom:
+    display_name: "United Kingdom"
+    risk_modifier: 1
+    escalation_required: true
+    notes:
+      - "UK GDPR and Data Protection Act impose strict requirements on personal data."
+      - "Investigatory Powers Act and Computer Misuse Act may apply to certain activities."
+      - "Legal review recommended for cross-border data transfers and processing."
+    special_flags:
+      - "data_protection_strict"
+      - "investigatory_powers_regime"
+
+  european_union:
+    display_name: "European Union"
+    risk_modifier: 1
+    escalation_required: true
+    notes:
+      - "GDPR imposes strict rules on processing personal data of EU residents."
+      - "Cross-border data transfers require specific legal mechanisms."
+      - "Member state laws vary; NIS2 and other directives may apply."
+      - "Legal review strongly recommended for any EU-related OSINT."
+    special_flags:
+      - "data_protection_strict"
+      - "cross_border_complexity"
+      - "member_state_variation"
+
+  australia:
+    display_name: "Australia"
+    risk_modifier: 0
+    escalation_required: false
+    notes:
+      - "Privacy Act applies to handling of personal information."
+      - "Telecommunications and surveillance laws may restrict certain techniques."
+      - "State and territory laws may impose additional requirements."
+    special_flags:
+      - "data_protection_moderate"
+      - "telecommunications_regulation"
+
+  india:
+    display_name: "India"
+    risk_modifier: 1
+    escalation_required: false
+    notes:
+      - "Digital Personal Data Protection Act and IT Act impose data handling obligations."
+      - "Cybersecurity and data localization requirements may apply."
+      - "Regulatory environment evolving; legal review recommended."
+    special_flags:
+      - "data_protection_emerging"
+      - "cybersecurity_sensitive"
+      - "data_localization"
+
+  brazil:
+    display_name: "Brazil"
+    risk_modifier: 1
+    escalation_required: false
+    notes:
+      - "LGPD (Lei Geral de Proteção de Dados) imposes data protection requirements."
+      - "Cross-border data transfer rules apply to personal data."
+      - "Enforcement framework maturing; seek legal counsel on compliance."
+    special_flags:
+      - "data_protection_strict"
+      - "cross_border_restrictions"
+
+  china:
+    display_name: "China"
+    risk_modifier: 3
+    escalation_required: true
+    notes:
+      - "Cybersecurity Law, Data Security Law, and PIPL impose strict requirements."
+      - "Data localization, cross-border transfer approval, and security reviews commonly required."
+      - "Activities may be subject to national security review or restrictions."
+      - "Legal review mandatory before any China-related OSINT operations."
+    special_flags:
+      - "data_protection_strict"
+      - "data_localization"
+      - "national_security_sensitive"
+      - "cross_border_restrictions"
+      - "cybersecurity_sensitive"
+
+  russia:
+    display_name: "Russia"
+    risk_modifier: 3
+    escalation_required: true
+    notes:
+      - "Data localization requirements and surveillance laws apply."
+      - "Sanctions, export controls, and geopolitical tensions may restrict activities."
+      - "Legal and security risks elevated; mandatory legal review required."
+      - "Cross-border data handling subject to strict controls."
+    special_flags:
+      - "data_localization"
+      - "sanctions_risk"
+      - "national_security_sensitive"
+      - "geopolitical_risk"
+
+  turkey:
+    display_name: "Turkey"
+    risk_modifier: 2
+    escalation_required: true
+    notes:
+      - "KVKK (data protection law) imposes obligations on personal data processing."
+      - "Cybersecurity and telecommunications regulations may apply."
+      - "Political and legal environment may affect permissible activities."
+      - "Legal review recommended for Turkey-related investigations."
+    special_flags:
+      - "data_protection_moderate"
+      - "cybersecurity_sensitive"
+      - "political_risk"
+
+  israel:
+    display_name: "Israel"
+    risk_modifier: 1
+    escalation_required: false
+    notes:
+      - "Privacy Protection Law regulates personal data handling."
+      - "Cybersecurity and export control considerations may apply."
+      - "Geopolitical context may affect operational risk; review recommended."
+    special_flags:
+      - "data_protection_moderate"
+      - "export_control_considerations"
+      - "geopolitical_context"
+
+  south_africa:
+    display_name: "South Africa"
+    risk_modifier: 0
+    escalation_required: false
+    notes:
+      - "POPIA (Protection of Personal Information Act) governs data protection."
+      - "Cross-border transfer rules apply to personal information."
+      - "Regulatory enforcement developing; verify current compliance requirements."
+    special_flags:
+      - "data_protection_moderate"
+      - "cross_border_restrictions"
+
+  mexico:
+    display_name: "Mexico"
+    risk_modifier: 0
+    escalation_required: false
+    notes:
+      - "Federal data protection law (LFPDPPP) applies to personal data processing."
+      - "Consent and transparency requirements may affect data collection."
+      - "Legal review recommended for significant investigations."
+    special_flags:
+      - "data_protection_moderate"
+      - "consent_requirements"

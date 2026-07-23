@@ -1,0 +1,265 @@
+#!/usr/bin/env python3
+import os
+import sys
+import shutil
+import subprocess
+from pathlib import Path
+from datetime import datetime
+from typing import Iterable, List, Optional, Tuple
+
+# --- Optional dependency (Rich). Hard-fail with a clear message if missing.
+try:
+    from rich.console import Console
+    from rich.text import Text
+    from rich.rule import Rule
+    from rich.status import Status
+except Exception:
+    print("This launcher requires the 'rich' package.")
+    print("Install it with: python3 -m pip install rich")
+    sys.exit(10)
+
+# -----------------------------
+# Config / project markers
+# -----------------------------
+# Files expected in the project root; used to confirm the launcher is
+# running from a real Anakrisis checkout.
+REPO_MARKERS = [
+    "Dockerfile",
+    "anakrisis.py",          # case-insensitive match handled below
+    "doctrine",              # doctrine YAML directory
+]
+
+# Protocol marker: a file named "anakrisis" in the project root positively
+# identifies an Anakrisis checkout. The launcher itself serves as the marker.
+PROTOCOL_MARKER = "anakrisis"
+
+# Cases directory (workshop)
+WORKSHOP_DIR = Path.home() / "anakrisis" / "cases"
+
+# How many recent cases to show
+RECENT_CASES_N = 8
+
+# Exit codes
+EXIT_BAD_DIR = 2
+EXIT_DOCKER = 3
+EXIT_CLAUDE = 4
+EXIT_MCP = 6
+EXIT_PROTOCOL = 7
+
+# UI
+ORANGE = "rgb(255,115,0)"        # neon orange
+CASE_COLOR = "rgb(145,195,100)"  # light matcha green
+MUTED = "grey70"
+
+console = Console(force_terminal=True)
+
+
+def clear_screen() -> None:
+    os.system("cls" if os.name == "nt" else "clear")
+
+
+def run_ok(cmd: List[str]) -> bool:
+    try:
+        subprocess.check_output(cmd, stderr=subprocess.DEVNULL)
+        return True
+    except Exception:
+        return False
+
+
+def run_capture(cmd: List[str]) -> Tuple[int, str]:
+    try:
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
+        return (0, out)
+    except subprocess.CalledProcessError as e:
+        return (e.returncode or 1, (e.output or ""))
+    except Exception as e:
+        return (1, str(e))
+
+
+def listdir_lower(p: Path) -> set:
+    try:
+        return {x.name.lower() for x in p.iterdir()}
+    except Exception:
+        return set()
+
+
+def has_markers(repo_dir: Path, markers: Iterable[str], require_at_least: int = 2) -> bool:
+    names = listdir_lower(repo_dir)
+    required = {m.lower() for m in markers}
+    present = required.intersection(names)
+    return len(present) >= require_at_least
+
+
+def protocol_present(repo_dir: Path) -> bool:
+    names = listdir_lower(repo_dir)
+    return PROTOCOL_MARKER.lower() in names
+
+
+def banner() -> None:
+    ascii_logo = r"""
+ █████╗ ███╗   ██╗ █████╗ ██╗  ██╗██████╗ ██╗███████╗██╗███████╗
+██╔══██╗████╗  ██║██╔══██╗██║ ██╔╝██╔══██╗██║██╔════╝██║██╔════╝
+███████║██╔██╗ ██║███████║█████╔╝ ██████╔╝██║███████╗██║███████╗
+██╔══██║██║╚██╗██║██╔══██║██╔═██╗ ██╔══██╗██║╚════██║██║╚════██║
+██║  ██║██║ ╚████║██║  ██║██║  ██╗██║  ██║██║███████║██║███████║
+╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝╚═╝╚══════╝
+""".rstrip("\n")
+
+    console.print(Text(ascii_logo, style=ORANGE))
+
+    headline = Text()
+    headline.append("ANAKRISIS MISSION CONTROL", style="bold")
+    headline.append(" | The Anakrisis Protocol", style=MUTED)
+    console.print(headline)
+
+    tagline = Text()
+    sep = Text(" × ", style=MUTED)
+    tagline.append("Evidence Stays Local", style=MUTED)
+    tagline.append_text(sep)
+    tagline.append("Open-Source Intelligence", style=MUTED)
+    tagline.append_text(sep)
+    tagline.append("Investigation", style=MUTED)
+    console.print(tagline)
+
+    console.print(Rule(style=MUTED))
+
+
+def ensure_workshop() -> None:
+    WORKSHOP_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def list_cases() -> List[Path]:
+    if not WORKSHOP_DIR.exists():
+        return []
+    cases = [p for p in WORKSHOP_DIR.iterdir() if p.is_dir() and not p.name.startswith(".")]
+    # Sort by modified time (desc)
+    cases.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return cases
+
+
+def fmt_mtime(p: Path) -> str:
+    dt = datetime.fromtimestamp(p.stat().st_mtime)
+    # Example: "February 3 09:12"
+    return f"{dt:%B} {dt.day} {dt:%H:%M}"
+
+
+def check_mcp_connected() -> bool:
+    """
+    Best-effort heuristic: confirms the Docker MCP Gateway CLI is present
+    and responding (`docker mcp --help`). It does not validate that the
+    gateway is actively serving the Anakrisis server.
+    """
+    if not shutil.which("docker"):
+        return False
+    # docker mcp is a subcommand, so `shutil.which("docker mcp")` isn't a thing.
+    # We just attempt a harmless command.
+    code, _out = run_capture(["docker", "mcp", "--help"])
+    return code == 0
+
+
+def status_checks(repo_dir: Path) -> None:
+    console.print(Rule(style=MUTED))
+    console.print(Text("Checking", style=MUTED))
+
+    # (name, check_fn, exit_code_or_None, fix_hint). A None exit code means the
+    # check is advisory: it only applies to the Docker MCP Gateway deployment,
+    # so a direct stdio setup (.mcp.json) still works without it.
+    checks = [
+        ("Docker", lambda: run_ok(["docker", "info"]), None,
+         "Note: only needed for the Docker MCP Gateway deployment. Start Docker Desktop (macOS/Windows) or the docker daemon (Linux)."),
+
+        ("Claude CLI", lambda: shutil.which("claude") is not None, EXIT_CLAUDE,
+         "Fix: install the Claude Code CLI and ensure `claude` is available on PATH."),
+
+        ("MCP Gateway", lambda: check_mcp_connected(), None,
+         "Note: only needed for the Docker MCP Gateway deployment: `docker mcp --help`."),
+
+        ("Protocol Marker", lambda: protocol_present(repo_dir), EXIT_PROTOCOL,
+         f"Fix: run the launcher from a project root containing a file named: {PROTOCOL_MARKER}"),
+    ]
+
+    for name, fn, code, fix in checks:
+        with console.status(f"{name} …", spinner="dots"):
+            ok = False
+            try:
+                ok = bool(fn())
+            except Exception:
+                ok = False
+
+        if not ok:
+            if code is None:
+                console.print(Text(f"⚠ {name} (skipped)", style="yellow"))
+                console.print(Text(fix, style=MUTED))
+                continue
+            console.print(Text(f"✗ {name}", style="bold red"))
+            console.print(Text(fix, style=MUTED))
+            sys.exit(code)
+
+        console.print(Text(f"✓ {name}", style="green"))
+
+    console.print(Rule(style=MUTED))
+
+
+def print_cases_section() -> None:
+    ensure_workshop()
+    cases = list_cases()
+    console.print(
+        Text(f"Cases on disk: {len(cases)}", style=MUTED)
+        + Text(" × ", style=MUTED)
+        + Text(f"Workshop: {WORKSHOP_DIR}", style=MUTED)
+    )
+
+    console.print(Text("Recent cases:", style=MUTED))
+    if not cases:
+        console.print(Text("   (none yet) — create a folder under the workshop directory.", style=MUTED))
+        return
+
+    for p in cases[:RECENT_CASES_N]:
+        line = Text("   ")
+        line.append(fmt_mtime(p), style=MUTED)
+        line.append("    ")
+        line.append(p.name, style=CASE_COLOR)
+        console.print(line)
+
+
+def main() -> None:
+    clear_screen()
+    banner()
+
+    repo_dir = Path(__file__).resolve().parent
+
+    # Directory check: launcher must live in project root with at least N markers
+    if not has_markers(repo_dir, REPO_MARKERS, require_at_least=2):
+        console.print(Text("✗ This launcher must be run from the Anakrisis project root.", style="bold red"))
+        console.print(Text(f"Detected launcher location: {repo_dir}", style=MUTED))
+        console.print(Text("Expected to find at least 2 of these files in that folder:", style=MUTED))
+        for m in REPO_MARKERS:
+            console.print(Text(f"  - {m}", style=MUTED))
+        sys.exit(EXIT_BAD_DIR)
+
+    # Checks (spinners → checkmarks)
+    status_checks(repo_dir)
+
+    # Cases
+    print_cases_section()
+    console.print()
+
+    console.print(Text("Starting The Anakrisis Protocol...", style="bold"))
+    console.print(Text("Interact in plain language — no special commands required.", style=MUTED))
+    console.print(Text('Example: "Plan an ethical OSINT investigation."', style=MUTED))
+    console.print()
+
+    # Launch the MCP client CLI from the project root
+    os.chdir(repo_dir)
+
+    env = os.environ.copy()
+
+    # Clear local endpoint overrides so the CLI uses its default config.
+    for var in ("ANTHROPIC_BASE_URL", "ANTHROPIC_AUTH_TOKEN"):
+        if env.pop(var, None) is not None:
+            console.print(Text(f"Note: ignoring {var} override for this session.", style=MUTED))
+
+    os.execvpe("claude", ["claude"], env)
+
+if __name__ == "__main__":
+    main()

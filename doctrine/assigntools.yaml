@@ -1,0 +1,1304 @@
+meta:
+  version: 1
+  last_updated: "2026-02-11"
+  notes: "Offline catalog used by AssignTools. Recommendations only."
+
+categories:
+  companies:
+    label: "Company Research"
+    description: "Tools for researching companies, startups, funding, and business intelligence"
+    tools:
+      - id: crunchbase
+        name: Crunchbase
+        url: https://www.crunchbase.com/
+        description: "Startup, funding, and private company data platform"
+        tags: [company, startup, funding, business, research]
+        cost: freemium
+        account_required: Likely not
+      - id: ezilon
+        name: Ezilon
+        url: https://www.ezilon.com/
+        description: "Regional web directory and world search engine"
+        tags: [directory, search, regional, business]
+        cost: unknown
+        account_required: Likely not
+      - id: glassdoor
+        name: Glassdoor
+        url: https://www.glassdoor.com/index.htm
+        description: "Job search platform, useful for career OSINT"
+        tags: [careers, jobs, company, reviews, employment]
+        cost: freemium
+        account_required: required
+      - id: guidestar
+        name: GuideStar
+        url: https://www.guidestar.org/
+        description: "Non Profit Company Lookup"
+        tags: [nonprofit, charity, organization, lookup]
+        cost: unknown
+        account_required: Likely not
+      - id: opencorporates
+        name: OpenCorporates
+        url: https://opencorporates.com/
+        description: "Global database of official corporate entities and legal records"
+        tags: [corporate, legal, database, global, entities]
+        cost: free
+        account_required: Likely not
+      - id: owler
+        name: Owler
+        url: https://www.owler.com/corp
+        description: "Crowdsourced competitive intelligence and company news tracking"
+        tags: [competitive, intelligence, news, business]
+        cost: freemium
+        account_required: required
+      - id: scoot
+        name: Scoot
+        url: https://www.scoot.co.uk/
+        description: "United Kingdom business directory and local search"
+        tags: [uk, directory, business, local]
+        cost: unknown
+        account_required: Likely not
+      - id: serpstat
+        name: Serpstat
+        url: https://serpstat.com/
+        description: "SEO Maps organization's hidden online footprints w/ keyword lookup"
+        tags: [seo, keywords, footprint, analytics]
+        cost: freemium
+        account_required: Likely not
+      - id: spyfu
+        name: SpyFu
+        url: https://www.spyfu.com/
+        description: "SEO and PPC competitor keyword lookup"
+        tags: [seo, ppc, competitor, keywords]
+        cost: freemium
+        account_required: Likely not
+      - id: accuranker
+        name: AccuRanker
+        url: https://www.accuranker.com/
+        description: "Real-time keyword rank tracking and search engine visibility analysis"
+        tags: [seo, ranking, keywords, tracking]
+        cost: paid
+        account_required: required
+      - id: builtwith
+        name: BuiltWith
+        url: https://builtwith.com/
+        description: "Find what a website is built with"
+        tags: [website, technology, stack, analysis]
+        cost: freemium
+        account_required: Likely not
+
+  company_registries:
+    label: "Company Registries"
+    description: "Official business registers and government company databases by region"
+    tools:
+      - id: canada-business-research
+        name: Canada Business Research
+        url: https://www.canada.ca/en/services/business/research.html
+        description: "Government of Canada business research and registry resources"
+        tags: [canada, business, government, registry]
+        cost: free
+        account_required: Likely not
+      - id: europages
+        name: Europages
+        url: https://www.europages.co.uk/
+        description: "European B2B business directory"
+        tags: [europe, business, directory, b2b]
+        cost: unknown
+        account_required: Likely not
+      - id: uk-overseas-registries
+        name: UK Overseas Registries
+        url: https://www.gov.uk/government/publications/overseas-registries/overseas-registries
+        description: "UK government list of overseas company registries"
+        tags: [uk, government, registry, overseas]
+        cost: free
+        account_required: Likely not
+      - id: wikipedia-business-registers
+        name: Wikipedia List of Official Business Registers
+        url: https://en.wikipedia.org/wiki/List_of_official_business_registers
+        description: "Reference list of official business registers worldwide"
+        tags: [registry, global, business, reference]
+        cost: free
+        account_required: Likely not
+
+  dns:
+    label: "DNS Research"
+    description: "DNS reconnaissance, lookup, and analysis tools"
+    tools:
+      - id: dnsdumpster
+        name: DNSDumpster
+        url: https://dnsdumpster.com/
+        description: "Passive DNS recon and mapping org external attack surface"
+        tags: [dns, reconnaissance, mapping, security]
+        cost: free
+        account_required: Likely not
+      - id: mxtoolbox
+        name: MXToolbox
+        url: https://mxtoolbox.com/
+        description: "MX record lookup tool"
+        tags: [dns, mx, email, lookup]
+        cost: freemium
+        account_required: Likely not
+      - id: viewdns
+        name: ViewDNS
+        url: https://viewdns.info/
+        description: "DNS analysis, investigation, and IP intel"
+        tags: [dns, analysis, ip, investigation]
+        cost: free
+        account_required: Likely not
+      - id: dnslytics
+        name: DNSlytics
+        url: https://dnslytics.com/
+        description: "Domain, IP, and tracking-code relationship discovery"
+        tags: [dns, domain, ip, tracking]
+        cost: freemium
+        account_required: Likely not
+      - id: recorded-future-dns
+        name: Recorded Future DNS History
+        url: https://www.recordedfuture.com/threat-intelligence-101/intelligence-sources-collection/dns-history
+        description: "DNS History OSINT Article"
+        tags: [dns, history, article, guide]
+        cost: free
+        account_required: Likely not
+
+  whois:
+    label: "WHOIS Lookup"
+    description: "Domain registration and WHOIS record lookup services"
+    tools:
+      - id: whoishostingthis
+        name: WhoIsHostingThis
+        url: https://whoishostingthis.com/
+        description: "Whois lookup"
+        tags: [whois, domain, hosting, lookup]
+        cost: free
+        account_required: Likely not
+      - id: whoisology
+        name: Whoisology
+        url: https://whoisology.com/
+        description: "Whois lookup"
+        tags: [whois, domain, lookup, history]
+        cost: freemium
+        account_required: Likely not
+      - id: builtwith-whois
+        name: BuiltWith
+        url: https://builtwith.com/
+        description: "Website/WHOIS lookup"
+        tags: [whois, website, technology, lookup]
+        cost: freemium
+        account_required: Likely not
+
+  internet_scan:
+    label: "Internet Scanning"
+    description: "Tools for scanning internet infrastructure, vulnerabilities, and historical data"
+    tools:
+      - id: ahrefs
+        name: Ahrefs
+        url: https://ahrefs.com/
+        description: "Subscription-based SEO platform with site/keyword/content explorer, rank tracking, and web analytics"
+        tags: [seo, analytics, backlinks, keywords]
+        cost: paid
+        account_required: required
+      - id: exonerator
+        name: ExoneraTor
+        url: https://exonerator.torproject.org/
+        description: "Database to check if an IP has acted as tor relays or exit nodes"
+        tags: [tor, ip, network, anonymity]
+        cost: free
+        account_required: Likely not
+      - id: intelx
+        name: Intelligence X
+        url: https://intelx.io/
+        description: "Dataleak/BreachData search engine"
+        tags: [breach, leak, database, search]
+        cost: freemium
+        account_required: Likely not
+      - id: leakix
+        name: LeakIX
+        url: https://leakix.net/
+        description: "Combines vulnerability scanning with leak monitoring, identifying when sensitive files (like .env or .git) are pasted publicly"
+        tags: [vulnerability, leak, monitoring, security]
+        cost: freemium
+        account_required: Likely not
+      - id: whatbreach
+        name: WhatBreach
+        url: https://github.com/Ekultek/WhatBreach
+        description: "A command-line tool that takes an email and automatically finds all public pastes where that email has appeared in a breach list"
+        tags: [breach, email, cli, tool]
+        cost: free
+        account_required: Likely not
+      - id: ipfingerprints
+        name: IP Fingerprints
+        url: https://ipfingerprints.com/
+        description: "B2B website visitor and company identifier/IP tracker"
+        tags: [ip, tracking, b2b, visitor]
+        cost: unknown
+        account_required: Likely not
+      - id: netcraft
+        name: Netcraft Site Report
+        url: https://sitereport.netcraft.com/
+        description: "Website infrastructure and hosting history dossier"
+        tags: [website, infrastructure, hosting, history]
+        cost: free
+        account_required: Likely not
+      - id: shodan
+        name: Shodan
+        url: https://www.shodan.io/
+        description: "Inter-connected device search engine"
+        tags: [iot, devices, security, scanning]
+        cost: freemium
+        account_required: Likely not
+      - id: censys
+        name: Censys
+        url: https://search.censys.io/
+        description: "Internet-wide host and SSL certificate search engine"
+        tags: [scanning, ssl, certificates, hosts]
+        cost: freemium
+        account_required: Likely not
+      - id: eyewitness
+        name: EyeWitness
+        url: https://github.com/RedSiege/EyeWitness
+        description: "CLI tool that captures screenshots of websites, RDP, and VNC services to visually identify exposed infrastructure."
+        tags: [infrastructure, reconnaissance, screenshots, web, rdp, vnc, cli]
+        cost: free
+        account_required: Likely not
+      - id: amass
+        name: OWASP Amass
+        url: https://github.com/owasp-amass/amass
+        description: "Advanced CLI-based network mapping and attack surface discovery tool for DNS enumeration and subdomain reconnaissance."
+        tags: [dns, subdomain, infrastructure, reconnaissance, attack-surface, cli]
+        cost: free
+        account_required: Likely not
+      - id: robtex
+        name: Robtex
+        url: https://robtex.com/
+        description: "Deep DNS and network infrastructure analysis"
+        tags: [dns, network, infrastructure, analysis]
+        cost: free
+        account_required: Likely not
+      - id: website-informer
+        name: Website Informer
+        url: https://website.informer.com/
+        description: "All in one website profiling and traffic statistics aggregator"
+        tags: [website, traffic, statistics, profiling]
+        cost: unknown
+        account_required: Likely not
+      - id: archive-org
+        name: Internet Archive
+        url: https://archive.org/
+        description: "WaybackMachine/Public Digital Library of Archives and Snapshots"
+        tags: [archive, wayback, historical, snapshots]
+        cost: free
+        account_required: Likely not
+      - id: sn1per
+        name: Sn1per
+        url: https://github.com/1N3/Sn1per
+        description: "CLI Tool Automated reconnaissance and vulnerability scanner on websites"
+        tags: [cli, reconnaissance, vulnerability, scanner]
+        cost: free
+        account_required: Likely not
+      - id: greynoise
+        name: GreyNoise
+        url: https://viz.greynoise.io/
+        description: "Internet scan"
+        tags: [scanning, ip, threat, intelligence]
+        cost: freemium
+        account_required: Likely not
+
+  email:
+    label: "Email Investigation"
+    description: "Email verification, breach checking, and lookup tools"
+    tools:
+      - id: dehashed
+        name: DeHashed
+        url: https://dehashed.com/
+        description: "A searchable database of leaked credentials used for identifying compromised accounts and data breaches"
+        tags: [breach, credentials, leak, database]
+        cost: freemium
+        account_required: Likely not
+      - id: emailhippo
+        name: Email Hippo
+        url: https://tools.emailhippo.com/
+        description: "Email address lookup/verifier"
+        tags: [email, verification, lookup, validation]
+        cost: freemium
+        account_required: Likely not
+      - id: haveibeenpwned
+        name: Have I Been Pwned
+        url: https://haveibeenpwned.com/
+        description: "Checks if email addresses or phone numbers have been compromised in data breaches"
+        tags: [breach, email, phone, security]
+        cost: free
+        account_required: Likely not
+      - id: holehe
+        name: Holehe
+        url: https://github.com/megadose/holehe
+        description: "CLI tool that checks which websites and social media platforms are associated with a specific email address"
+        tags: [email, cli, social-media, lookup]
+        cost: free
+        account_required: Likely not
+      - id: hunter
+        name: Hunter
+        url: https://hunter.io/
+        description: "Finds and verifies professional email addresses associated with specific companies and domains"
+        tags: [email, verification, company, domain]
+        cost: freemium
+        account_required: unknown
+      - id: pipl
+        name: Pipl
+        url: https://pipl.com/
+        description: "Deep-web identity resolution and people search used for fraud prevention and investigation"
+        tags: [people, identity, search, fraud]
+        cost: paid
+        account_required: unknown
+      - id: thatsthem-email
+        name: ThatsThem Reverse Email
+        url: https://thatsthem.com/reverse-email-lookup
+        description: "Reverse Email Lookup"
+        tags: [email, reverse, lookup, people]
+        cost: freemium
+        account_required: Likely not
+      - id: findemails
+        name: FindEmails
+        url: https://www.findemails.com/
+        description: "Email address Lookup"
+        tags: [email, lookup, search, verification]
+        cost: unknown
+        account_required: required
+      - id: emailable
+        name: Emailable
+        url: https://emailable.com/?redirect_source=verify-email
+        description: "Email Verification Lookup"
+        tags: [email, verification, validation, lookup]
+        cost: freemium
+        account_required: Likely not
+      - id: epieos
+        name: Epieos
+        url: https://epieos.com/
+        description: "Email AND phone number reverse lookup tool"
+        tags: [email, phone, reverse, lookup]
+        cost: free
+        account_required: Likely not
+      - id: voilanorbert
+        name: VoilaNorbert
+        url: https://www.voilanorbert.com/
+        description: "Email finder based on name/domain"
+        tags: [email, finder, name, domain]
+        cost: paid
+        account_required: required
+      - id: leakcheck
+        name: LeakCheck
+        url: https://leakcheck.io/
+        description: "Email Breach Data Checker"
+        tags: [email, breach, leak, checker]
+        cost: freemium
+        account_required: Likely not
+      - id: emailrep
+        name: EmailRep
+        url: https://emailrep.io/
+        description: "Email Rep Checker"
+        tags: [email, reputation, checker, validation]
+        cost: free
+        account_required: Likely not
+      - id: zoominfo
+        name: ZoomInfo
+        url: https://www.zoominfo.com/
+        description: "Email lookup"
+        tags: [email, lookup, business, contact]
+        cost: paid
+        account_required: Likely not
+
+  phone:
+    label: "Phone Number Lookup"
+    description: "Phone number verification, reverse lookup, and carrier identification"
+    tools:
+      - id: freecarrierlookup
+        name: Free Carrier Lookup
+        url: https://www.freecarrierlookup.com/
+        description: "Phone Number Lookup"
+        tags: [phone, carrier, lookup, verification]
+        cost: free
+        account_required: Likely not
+      - id: nationalcellulardirectory
+        name: National Cellular Directory
+        url: https://www.nationalcellulardirectory.com/
+        description: "Search By Name/PhoneNumber Lookup"
+        tags: [phone, name, lookup, directory]
+        cost: freemium
+        account_required: Likely not
+      - id: phonevalidator
+        name: Phone Validator
+        url: https://www.phonevalidator.com/index.aspx
+        description: "Phone Number Verification Lookup"
+        tags: [phone, validation, verification, lookup]
+        cost: freemium
+        account_required: Likely not
+      - id: reversephonelookup
+        name: ReversePhoneLookup
+        url: https://www.reversephonelookup.com/
+        description: "Reverse phone number lookup"
+        tags: [phone, reverse, lookup, search]
+        cost: freemium
+        account_required: Likely not
+      - id: spydialer
+        name: SpyDialer
+        url: https://spydialer.com/
+        description: "Phone Number Lookup"
+        tags: [phone, lookup, reverse, search]
+        cost: free
+        account_required: unknown
+      - id: twilio-lookup
+        name: Twilio Lookup
+        url: https://www.twilio.com/en-us/user-authentication-identity/lookup
+        description: "Phone Number Lookup"
+        tags: [phone, lookup, verification, api]
+        cost: paid
+        account_required: required
+      - id: truecaller
+        name: Truecaller
+        url: https://www.truecaller.com/
+        description: "Phone Number Lookup"
+        tags: [phone, lookup, caller-id, spam]
+        cost: freemium
+        account_required: Likely not
+      - id: numlookup
+        name: NumLookup
+        url: https://www.numlookup.com/
+        description: "Phone Number Lookup"
+        tags: [phone, lookup, reverse, verification]
+        cost: free
+        account_required: Likely not
+      - id: 411-phone
+        name: 411 Reverse Phone
+        url: https://www.411.com/reverse-phone-lookup
+        description: "Reverse phone number lookup"
+        tags: [phone, reverse, lookup, directory]
+        cost: freemium
+        account_required: Likely not
+      - id: whocalld
+        name: WhoCalld
+        url: https://whocalld.com/
+        description: "Phone Number Lookup"
+        tags: [phone, lookup, caller-id, reverse]
+        cost: free
+        account_required: Likely not
+      - id: thatsthem-phone
+        name: ThatsThem Reverse Phone
+        url: https://thatsthem.com/reverse-phone-lookup
+        description: "Reverse Phone number lookup"
+        tags: [phone, reverse, lookup, people]
+        cost: freemium
+        account_required: Likely not
+      - id: fonefinder
+        name: FoneFinder
+        url: https://www.fonefinder.net/
+        description: "Phone number lookup by region"
+        tags: [phone, lookup, region, area-code]
+        cost: free
+        account_required: Likely not
+      - id: reversephonecheck
+        name: ReversePhoneCheck
+        url: https://www.reversephonecheck.com/
+        description: "Reverse Phone Number lookup"
+        tags: [phone, reverse, lookup, verification]
+        cost: freemium
+        account_required: Likely not
+
+  people_records:
+    label: "People Records"
+    description: "People search, address lookup, and public records databases"
+    tools:
+      - id: classmates
+        name: Classmates
+        url: https://www.classmates.com/
+        description: "Find person through school"
+        tags: [people, school, alumni, search]
+        cost: freemium
+        account_required: Likely not
+      - id: familysearch
+        name: FamilySearch
+        url: https://www.familysearch.org/en/united-states/?lang=eng
+        description: "Person lookup"
+        tags: [people, genealogy, family, records]
+        cost: free
+        account_required: Likely not
+      - id: familytreenow
+        name: FamilyTreeNow
+        url: https://www.familytreenow.com/
+        description: "Person lookup"
+        tags: [people, family, records, search]
+        cost: free
+        account_required: Likely not
+      - id: genealogylinks
+        name: Genealogy Links
+        url: https://www.genealogylinks.net/index.html
+        description: "Database of genealogy info, good for manual OSINT"
+        tags: [genealogy, family, database, research]
+        cost: free
+        account_required: Likely not
+      - id: addresses
+        name: Addresses
+        url: https://www.addresses.com/
+        description: "People/Address search"
+        tags: [people, address, search, lookup]
+        cost: freemium
+        account_required: Likely not
+      - id: homemetry
+        name: Homemetry
+        url: https://homemetry.com/
+        description: "Address Search"
+        tags: [address, property, search, lookup]
+        cost: freemium
+        account_required: Likely not
+      - id: infobel
+        name: Infobel
+        url: https://www.infobel.com/
+        description: "Person Lookup by Region"
+        tags: [people, regional, lookup, directory]
+        cost: unknown
+        account_required: Likely not
+      - id: interment
+        name: Interment
+        url: https://www.interment.net/data/search.htm
+        description: "Person Search"
+        tags: [people, cemetery, records, search]
+        cost: free
+        account_required: Likely not
+      - id: rocketreach
+        name: RocketReach
+        url: https://rocketreach.co/
+        description: "Person lookup"
+        tags: [people, contact, business, lookup]
+        cost: paid
+        account_required: required
+      - id: lullar
+        name: Lullar
+        url: https://com.lullar.com/
+        description: "Person and Username lookup"
+        tags: [people, username, lookup, search]
+        cost: free
+        account_required: Likely not
+      - id: peekyou
+        name: PeekYou
+        url: https://www.peekyou.com/
+        description: "Person lookup"
+        tags: [people, search, social-media, lookup]
+        cost: free
+        account_required: Likely not
+      - id: spokeo
+        name: Spokeo
+        url: https://www.spokeo.com/
+        description: "Person lookup"
+        tags: [people, search, records, lookup]
+        cost: freemium
+        account_required: Likely not
+      - id: recruitin
+        name: RecruitIn
+        url: https://recruitin.net/
+        description: "Person lookup on linkedin"
+        tags: [people, linkedin, recruitment, search]
+        cost: free
+        account_required: Likely not
+      - id: searchbug
+        name: SearchBug
+        url: https://www.searchbug.com/
+        description: "Person lookup"
+        tags: [people, search, records, lookup]
+        cost: freemium
+        account_required: Likely not
+      - id: skipease
+        name: SkipEase
+        url: https://www.skipease.com/
+        description: "Person lookup"
+        tags: [people, search, records, lookup]
+        cost: freemium
+        account_required: Likely not
+      - id: snoopstation
+        name: SnoopStation
+        url: https://snoopstation.com/
+        description: "Person lookup"
+        tags: [people, search, records, lookup]
+        cost: free
+        account_required: Likely not
+      - id: whitepages
+        name: Whitepages
+        url: https://www.whitepages.com/
+        description: "Person lookup"
+        tags: [people, search, phone, address]
+        cost: freemium
+        account_required: Likely not
+      - id: yasni
+        name: Yasni
+        url: https://www.yasni.com/
+        description: "Person lookup"
+        tags: [people, search, international, lookup]
+        cost: free
+        account_required: Likely not
+      - id: zabasearch
+        name: ZabaSearch
+        url: https://www.zabasearch.com/
+        description: "Person lookup"
+        tags: [people, search, records, lookup]
+        cost: free
+        account_required: Likely not
+      - id: 411
+        name: 411
+        url: https://www.411.com/
+        description: "Person lookup"
+        tags: [people, phone, address, directory]
+        cost: freemium
+        account_required: Likely not
+      - id: 192
+        name: 192
+        url: https://www.192.com/
+        description: "UK Based person lookup"
+        tags: [people, uk, lookup, directory]
+        cost: freemium
+        account_required: Likely not
+      - id: canada411
+        name: Canada411
+        url: https://www.canada411.ca/
+        description: "Canada based person lookup"
+        tags: [people, canada, lookup, directory]
+        cost: free
+        account_required: Likely not
+      - id: peoplesearch-au
+        name: PeopleSearch Australia
+        url: https://www.peoplesearch.com.au/
+        description: "Australian based person lookup"
+        tags: [people, australia, lookup, directory]
+        cost: unknown
+        account_required: Likely not
+      - id: ussearch
+        name: USSearch
+        url: https://www.ussearch.com/search-select/
+        description: "US person, phone number, and address lookup"
+        tags: [people, us, phone, address]
+        cost: freemium
+        account_required: Likely not
+      - id: truepeoplesearch
+        name: TruePeopleSearch
+        url: https://www.truepeoplesearch.com/
+        description: "People lookup"
+        tags: [people, search, address, phone]
+        cost: free
+        account_required: Likely not
+      - id: fastpeoplesearch
+        name: FastPeopleSearch
+        url: https://www.fastpeoplesearch.com/
+        description: "People lookup"
+        tags: [people, search, address, phone]
+        cost: free
+        account_required: Likely not
+
+  geospatial_intelligence:
+    label: "Geospatial Intelligence"
+    description: "Mapping, geocoding, and location intelligence tools"
+    tools:
+      - id: bing-maps
+        name: Bing Maps
+        url: https://www.bing.com/maps
+        description: "Web-based mapping service for directions, traffic, etc searches"
+        tags: [mapping, directions, traffic, geolocation]
+        cost: free
+        account_required: Likely not
+      - id: mgrs-converter
+        name: MGRS Converter
+        url: https://dominoc925-pages.appspot.com/mapplets/cs_mgrs.html
+        description: "A specialized tool for converting coordinates and viewing Military Grid Reference System (MGRS) data on a map"
+        tags: [coordinates, mgrs, military, conversion]
+        cost: free
+        account_required: Likely not
+      - id: google-earth
+        name: Google Earth
+        url: https://earth.google.com/web
+        description: "A 3D planetary browser that provides high-resolution satellite imagery and geographical data"
+        tags: [satellite, imagery, 3d, mapping]
+        cost: free
+        account_required: Likely not
+      - id: google-maps
+        name: Google Maps
+        url: https://www.google.com/maps
+        description: "Remote surveillance and GEOINT"
+        tags: [mapping, surveillance, geolocation, directions]
+        cost: free
+        account_required: Likely not
+      - id: wigle
+        name: WiGLE
+        url: https://wigle.net/
+        description: "A crowdsourced database used for mapping and searching wireless network (Wi-Fi) hotspots and cell towers globally"
+        tags: [wifi, wireless, network, mapping]
+        cost: freemium
+        account_required: required
+      - id: suncalc
+        name: SunCalc
+        url: http://suncalc.net/
+        description: "Manual geolocation OSINT resource"
+        tags: [geolocation, sun, shadows, analysis]
+        cost: free
+        account_required: Likely not
+      - id: astrometry
+        name: Astrometry
+        url: https://nova.astrometry.net/
+        description: "Manual geolocation OSINT resource"
+        tags: [geolocation, astronomy, stars, analysis]
+        cost: free
+        account_required: Likely not
+      - id: gpsvisualizer
+        name: GPS Visualizer
+        url: https://www.gpsvisualizer.com/geocode
+        description: "GPS OSINT"
+        tags: [gps, geocoding, mapping, visualization]
+        cost: free
+        account_required: Likely not
+      - id: doogal-batch
+        name: Doogal Batch Geocoding
+        url: https://www.doogal.co.uk/BatchGeocoding
+        description: "UK based geocoding"
+        tags: [geocoding, uk, batch, mapping]
+        cost: free
+        account_required: Likely not
+      - id: doogal-reverse
+        name: Doogal Reverse Geocoding
+        url: https://www.doogal.co.uk/BatchReverseGeocoding
+        description: "UK based reverse geocoding"
+        tags: [geocoding, reverse, uk, mapping]
+        cost: free
+        account_required: Likely not
+      - id: batchgeo
+        name: BatchGeo
+        url: https://batchgeo.com/
+        description: "Geolocation data mapper"
+        tags: [geocoding, mapping, batch, visualization]
+        cost: freemium
+        account_required: Likely not
+      - id: scribblemaps
+        name: ScribbleMaps
+        url: https://www.scribblemaps.com/
+        description: "Geolocation data mapper"
+        tags: [mapping, custom, visualization, geocoding]
+        cost: freemium
+        account_required: unknown
+      - id: antennasearch
+        name: AntennaSearch
+        url: https://www.antennasearch.com/
+        description: "Geolocation address lookup"
+        tags: [antenna, cell-tower, geolocation, lookup]
+        cost: free
+        account_required: Likely not
+
+  search:
+    label: "Search Engines"
+    description: "General and specialized search engines"
+    tools:
+      - id: bing
+        name: Bing
+        url: https://www.bing.com/
+        description: "Search engine with advanced search capability"
+        tags: [search, engine, general, microsoft]
+        cost: free
+        account_required: Likely not
+      - id: duckduckgo
+        name: DuckDuckGo
+        url: https://duckduckgo.com/
+        description: "Search engine with advanced search capability"
+        tags: [search, engine, privacy, anonymous]
+        cost: free
+        account_required: Likely not
+      - id: google
+        name: Google
+        url: https://www.google.com/
+        description: "Search engine with advanced search capability"
+        tags: [search, engine, general, google]
+        cost: free
+        account_required: Likely not
+      - id: yahoo
+        name: Yahoo
+        url: https://www.yahoo.com/
+        description: "Search engine"
+        tags: [search, engine, general, portal]
+        cost: free
+        account_required: Likely not
+      - id: ask
+        name: Ask
+        url: https://www.ask.com/
+        description: "Q&A focused search engine"
+        tags: [search, questions, answers, qa]
+        cost: free
+        account_required: Likely not
+      - id: advangle
+        name: AdvAngle
+        url: http://advangle.com/
+        description: "Advanced Search/Google dork maker"
+        tags: [search, advanced, dork, google]
+        cost: free
+        account_required: Likely not
+      - id: aol-search
+        name: AOL Search
+        url: https://search.aol.com/
+        description: "Web portal"
+        tags: [search, engine, portal, general]
+        cost: free
+        account_required: Likely not
+      - id: instya
+        name: Instya
+        url: https://www.instya.com/
+        description: "E-commerce search engine"
+        tags: [search, ecommerce, shopping, products]
+        cost: free
+        account_required: Likely not
+      - id: impersonal
+        name: Impersonal
+        url: https://impersonal.me/
+        description: "International search engine"
+        tags: [search, international, privacy, anonymous]
+        cost: free
+        account_required: Likely not
+      - id: parseek
+        name: Parseek
+        url: http://www.parseek.com/
+        description: "Iran Specific Search Engine"
+        tags: [search, iran, regional, farsi]
+        cost: free
+        account_required: Likely not
+
+  image_search:
+    label: "Image Search"
+    description: "Reverse image search and image identification tools"
+    tools:
+      - id: bing-images
+        name: Bing Images
+        url: https://www.bing.com/images
+        description: "Image search"
+        tags: [image, search, reverse, visual]
+        cost: free
+        account_required: Likely not
+      - id: google-images
+        name: Google Images
+        url: https://images.google.com/
+        description: "Image search"
+        tags: [image, search, reverse, visual]
+        cost: free
+        account_required: Likely not
+      - id: imageidentify
+        name: ImageIdentify
+        url: https://www.imageidentify.com/
+        description: "Image identification"
+        tags: [image, identification, ai, analysis]
+        cost: free
+        account_required: Likely not
+      - id: tineye
+        name: TinEye
+        url: https://tineye.com/
+        description: "Reverse image search"
+        tags: [image, reverse, search, tracking]
+        cost: free
+        account_required: Likely not
+      - id: duplichecker-image
+        name: Duplichecker Image Search
+        url: https://www.duplichecker.com/reverse-image-search.php
+        description: "Reverse image search"
+        tags: [image, reverse, search, duplicate]
+        cost: free
+        account_required: Likely not
+      - id: labnol-reverse
+        name: Labnol Reverse Image
+        url: https://www.labnol.org/reverse
+        description: "Reverse image search"
+        tags: [image, reverse, search, tool]
+        cost: free
+        account_required: Likely not
+      - id: pimeyes
+        name: PimEyes
+        url: https://pimeyes.com/en
+        description: "Facial recognition"
+        tags: [facial, recognition, image, search]
+        cost: freemium
+        account_required: Likely not
+      - id: yahoo-images
+        name: Yahoo Images
+        url: https://images.search.yahoo.com/
+        description: "Image search"
+        tags: [image, search, visual, yahoo]
+        cost: free
+        account_required: Likely not
+      - id: yandex-images
+        name: Yandex Images
+        url: https://yandex.com/images
+        description: "Russian based reverse image search"
+        tags: [image, reverse, search, russian]
+        cost: free
+        account_required: Likely not
+
+  social_media:
+    label: "Social Media"
+    description: "Social media analysis and profile investigation tools"
+    tools:
+      - id: tinfoleak
+        name: Tinfoleak
+        url: https://tinfoleak.com/
+        description: "Twitter specific dossier/Get info about twitter user"
+        tags: [twitter, analysis, dossier, osint]
+        cost: unknown
+        account_required: Likely not
+      - id: twitter-advanced
+        name: Twitter Advanced Search
+        url: http://twitter.com/search-advanced
+        description: "Twitter's advanced search"
+        tags: [twitter, search, advanced, social]
+        cost: free
+        account_required: unknown
+      - id: facebook-help
+        name: Facebook Search Guide
+        url: https://www.facebook.com/help/821153694683665/
+        description: "Facebook specific - Guide to find info on facebook user"
+        tags: [facebook, guide, search, social]
+        cost: free
+        account_required: unknown
+      - id: lookup-id
+        name: Lookup-ID
+        url: https://lookup-id.com/
+        description: "Finds ID from facebook profile, group, or page"
+        tags: [facebook, id, lookup, profile]
+        cost: free
+        account_required: unknown
+      - id: socialrank
+        name: SocialRank
+        url: https://socialrank.com/
+        description: "Social media analytics tool"
+        tags: [social-media, analytics, followers, insights]
+        cost: unknown
+        account_required: unknown
+      - id: picuki
+        name: Picuki
+        url: https://picuki.site/
+        description: "Instagram profile viewer without account"
+        tags: [instagram, viewer, anonymous, profiles]
+        cost: free
+        account_required: Likely not
+      - id: tikvib
+        name: TikVib
+        url: https://www.tikvib.com/
+        description: "Tiktok profile viewer without account"
+        tags: [tiktok, viewer, anonymous, profiles]
+        cost: free
+        account_required: Likely not
+      - id: social-searcher
+        name: Social Searcher
+        url: https://www.social-searcher.com/
+        description: "Social media search engine"
+        tags: [social-media, search, monitoring, multi-platform]
+        cost: freemium
+        account_required: Likely not
+      - id: socialblade
+        name: SocialBlade
+        url: https://socialblade.com/
+        description: "Analytics viewer for social media sites"
+        tags: [social-media, analytics, statistics, tracking]
+        cost: free
+        account_required: Likely not
+      - id: pinterest
+        name: Pinterest
+        url: https://www.pinterest.com/
+        description: "Visual discovery and image-sharing platform"
+        tags: [social-media, images, inspiration, visual]
+        cost: free
+        account_required: unknown
+      - id: facebook
+        name: Facebook
+        url: https://www.facebook.com/
+        description: "Social networking platform with public profiles, pages, and groups"
+        tags: [social-media, networking, profiles, meta]
+        cost: free
+        account_required: unknown
+      - id: instagram
+        name: Instagram
+        url: https://www.instagram.com/
+        description: "Photo and video sharing social platform"
+        tags: [social-media, photos, visual, meta]
+        cost: free
+        account_required: unknown
+      - id: linkedin
+        name: LinkedIn
+        url: https://www.linkedin.com/
+        description: "Professional networking platform with public career profiles"
+        tags: [social-media, professional, networking, business]
+        cost: freemium
+        account_required: unknown
+      - id: reddit
+        name: Reddit
+        url: https://www.reddit.com/
+        description: "Community discussion forum with public post and comment history"
+        tags: [social-media, forum, discussion, community]
+        cost: free
+        account_required: unknown
+      - id: tinder
+        name: Tinder
+        url: https://tinder.com/
+        description: "Dating app with public-facing profile details"
+        tags: [social-media, dating, profiles, matching]
+        cost: freemium
+        account_required: unknown
+      - id: tumblr
+        name: Tumblr
+        url: https://www.tumblr.com/
+        description: "Microblogging and content-sharing platform"
+        tags: [social-media, blogging, microblog, content]
+        cost: free
+        account_required: unknown
+      - id: x
+        name: X
+        url: https://x.com/
+        description: "Microblogging platform (formerly Twitter) with public posts and profiles"
+        tags: [social-media, twitter, microblog, posts]
+        cost: free
+        account_required: unknown
+
+  username:
+    label: "Username Lookup"
+    description: "Username availability and account discovery across platforms"
+    tools:
+      - id: namechk
+        name: Namechk
+        url: https://namechk.com/
+        description: "Username lookup"
+        tags: [username, lookup, availability, social-media]
+        cost: free
+        account_required: Likely not
+      - id: sherlock
+        name: Sherlock
+        url: https://github.com/sherlocksecurity/sherlock
+        description: "CLI-based username lookup tool that checks many platforms for potential account presence."
+        tags: [username, enumeration, cli, social, pivot]
+        cost: free
+        account_required: Likely not
+      - id: maigret
+        name: Maigret
+        url: https://github.com/soxoj/maigret
+        description: "Enhanced CLI-based username enumeration tool similar to Sherlock with expanded detection capabilities."
+        tags: [username, enumeration, cli, social, pivot]
+        cost: free
+        account_required: Likely not
+      - id: namecheckup
+        name: NameCheckup
+        url: https://namecheckup.com/
+        description: "Username lookup"
+        tags: [username, lookup, availability, social-media]
+        cost: free
+        account_required: Likely not
+      - id: usersearch
+        name: UserSearch
+        url: https://www.usersearch.org/
+        description: "Username lookup"
+        tags: [username, lookup, search, social-media]
+        cost: free
+        account_required: Likely not
+      - id: whatsmyname
+        name: WhatsMyName
+        url: https://whatsmyname.app/
+        description: "Username lookup"
+        tags: [username, lookup, search, osint]
+        cost: free
+        account_required: Likely not
+      - id: instantusername
+        name: InstantUsername
+        url: https://instantusername.com/
+        description: "Username search"
+        tags: [username, search, availability, platforms]
+        cost: free
+        account_required: Likely not
+      - id: digitalfootprint
+        name: DigitalFootprintCheck
+        url: https://www.digitalfootprintcheck.com/free-username-search
+        description: "Username search"
+        tags: [username, search, footprint, social-media]
+        cost: free
+        account_required: Likely not
+      - id: idcrawl
+        name: IDCrawl
+        url: https://www.idcrawl.com/username-search
+        description: "Username search"
+        tags: [username, search, lookup, social-media]
+        cost: free
+        account_required: Likely not
+
+  google_dork:
+    label: "Google Dorking"
+    description: "Advanced search operators and Google hacking tools"
+    tools:
+      - id: google-advanced
+        name: Google Advanced Search
+        url: https://www.google.com/advanced_search
+        description: "Advanced search"
+        tags: [google, advanced, search, operators]
+        cost: free
+        account_required: Likely not
+      - id: dorkgpt
+        name: DorkGPT
+        url: https://www.dorkgpt.com/
+        description: "Advanced search"
+        tags: [google, dork, ai, generator]
+        cost: free
+        account_required: Likely not
+      - id: dorksearch
+        name: DorkSearch
+        url: https://dorksearch.com/
+        description: "Advanced search"
+        tags: [google, dork, search, database]
+        cost: free
+        account_required: Likely not
+      - id: ghdb
+        name: Google Hacking Database
+        url: https://www.exploit-db.com/google-hacking-database
+        description: "Community database of advanced search queries (Google dorks)"
+        tags: [google, dork, database, exploits]
+        cost: free
+        account_required: Likely not
+
+  safety:
+    label: "Safety & Security"
+    description: "URL, file, and IP safety checking tools"
+    tools:
+      - id: virustotal
+        name: VirusTotal
+        url: https://www.virustotal.com/gui/home/search
+        description: "See if urls/files are dangerous"
+        tags: [security, malware, scanning, virus]
+        cost: free
+        account_required: Likely not
+      - id: hybrid-analysis
+        name: Hybrid Analysis
+        url: https://hybrid-analysis.com/
+        description: "See if urls/files are dangerous"
+        tags: [security, malware, sandbox, analysis]
+        cost: free
+        account_required: Likely not
+      - id: ipqualityscore
+        name: IPQualityScore
+        url: https://www.ipqualityscore.com/
+        description: "See if urls/files/ips are dangerous"
+        tags: [security, ip, fraud, reputation]
+        cost: freemium
+        account_required: Likely not
+
+  osint_directories:
+    label: "OSINT Directories"
+    description: "Comprehensive OSINT resource directories and training"
+    tools:
+      - id: osinthandbook
+        name: OSINT Handbook
+        url: https://www.osinthandbook.com/
+        description: "Practical OSINT handbook with curated techniques and resources"
+        tags: [osint, guide, resources, handbook]
+        cost: free
+        account_required: unknown
+      - id: osintframework
+        name: OSINT Framework
+        url: https://osintframework.com/
+        description: "Interactive directory of OSINT tools organized by artifact type"
+        tags: [osint, framework, tools, directory]
+        cost: free
+        account_required: unknown
+      - id: ohshint
+        name: OhShINT
+        url: https://github.com/OhShINT
+        description: "GitHub collection of OSINT resources and guides"
+        tags: [osint, github, resources, collection]
+        cost: free
+        account_required: unknown
+      - id: awesome-osint
+        name: Awesome OSINT
+        url: https://github.com/jivoi/awesome-osint
+        description: "Curated awesome-list of OSINT tools and resources on GitHub"
+        tags: [osint, github, resources, awesome-list]
+        cost: free
+        account_required: unknown
+      - id: osintdojo-resources
+        name: OSINT Dojo Resources
+        url: https://www.osintdojo.com/resources/
+        description: "OSINT GUIDE"
+        tags: [osint, guide, training, resources]
+        cost: free
+        account_required: unknown
+      - id: inteltechniques
+        name: IntelTechniques
+        url: https://inteltechniques.com/tools/
+        description: "PAID OSINT TRAINING W/ Certification"
+        tags: [osint, training, certification, paid]
+        cost: paid
+        account_required: unknown
+
+  vehicles:
+    label: "Vehicle Lookup"
+    description: "VIN and license plate lookup services"
+    tools:
+      - id: faxvin
+        name: FaxVIN
+        url: https://www.faxvin.com/
+        description: "VIN/License plate search"
+        tags: [vehicle, vin, license-plate, lookup]
+        cost: freemium
+        account_required: Likely not
+
+  documents_metadata:
+    label: "Document Metadata"
+    description: "Tools for extracting and analyzing file metadata"
+    tools:
+      - id: exifmeta
+        name: ExifMeta
+        url: https://exifmeta.com/
+        description: "Metadata reader"
+        tags: [metadata, exif, images, analysis]
+        cost: free
+        account_required: Likely not
+      - id: exif-tools
+        name: Exif.tools
+        url: https://exif.tools/
+        description: "Metadata reader"
+        tags: [metadata, exif, images, viewer]
+        cost: free
+        account_required: Likely not
+      - id: onlineexifviewer
+        name: OnlineExifViewer
+        url: https://onlineexifviewer.com/
+        description: "Metadata reader"
+        tags: [metadata, exif, images, online]
+        cost: free
+        account_required: Likely not
+      - id: exifeditor
+        name: ExifEditor
+        url: https://exifeditor.com/
+        description: "Metadata reader"
+        tags: [metadata, exif, editor, images]
+        cost: free
+        account_required: Likely not
+
+  cryptocurrency:
+    label: "Cryptocurrency"
+    description: "Blockchain and cryptocurrency investigation tools"
+    tools:
+      - id: solscan
+        name: Solscan
+        url: https://solscan.io/
+        description: "Inspects transactions, tokens, and wallet balances exclusively on the Solana network"
+        tags: [blockchain, solana, wallet, transactions]
+        cost: free
+        account_required: Likely not
+      - id: blockchair
+        name: Blockchair
+        url: https://blockchair.com/
+        description: "Provides cross-chain data (BTC, ETH, etc.) to search for specific addresses, hashes, or text memos across multiple blockchains"
+        tags: [blockchain, multi-chain, search, explorer]
+        cost: free
+        account_required: Likely not
+      - id: etherscan
+        name: Etherscan
+        url: https://etherscan.io/
+        description: "Ethereum-specific ledger. The gold standard for investigating Ethereum transactions, smart contracts, and ERC-20 token movements"
+        tags: [blockchain, ethereum, transactions, smart-contracts]
+        cost: free
+        account_required: Likely not
+      - id: breadcrumbs
+        name: Breadcrumbs
+        url: https://www.breadcrumbs.app/
+        description: "Traces the 'hops' between wallets to create visual flowcharts of how stolen or illicit funds move"
+        tags: [blockchain, tracing, visualization, forensics]
+        cost: freemium
+        account_required: Likely not

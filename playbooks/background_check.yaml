@@ -1,0 +1,68 @@
+# Background Check Investigation Playbook
+
+investigation_type: "background_check"
+description: "Verify identity and history of individuals for authorized purposes"
+note: "Applicable legal requirements vary by jurisdiction and purpose (employment, tenancy, due diligence)."
+
+risk_baseline: "medium"
+
+phases:
+  - intake
+  - planning
+  - discovery
+  - validation
+  - reporting
+
+safe_first_steps:
+  - "Verify authorization and legal basis for background check"
+  - "Review applicable laws (FCRA, state laws, data protection)"
+  - "Limit collection to information strictly relevant to the stated, authorized purpose"
+  - "Document scope limitations and permissible use"
+  - "Identify public records sources (court records, property records)"
+  - "Check professional licenses and registrations"
+  - "Review publicly available social media (no login circumvention, no interaction, no deception)"
+  - "Confirm subject identity using multiple identifiers before attributing records"
+
+authorization_requirements:
+  - "Written consent from subject (if employment/tenant screening)"
+  - "Legitimate purpose under FCRA or equivalent"
+  - "Compliance with adverse action procedures"
+  - "Ensure compliance with applicable anti-discrimination and fair hiring laws"
+  - "Defined, documented purpose for collection and use of information"
+  - "Use limited strictly to authorized purpose"
+
+data_sources:
+  allowed:
+    - "Public court records"
+    - "Property ownership records"
+    - "Professional licenses"
+    - "Published news articles"
+    - "Publicly visible social media profiles"
+  restricted:
+    - "Credit reports (requires FCRA compliance)"
+    - "Criminal records (verify disposition; respect expungement/sealing and jurisdictional reporting limits)"
+    - "Medical records (HIPAA protected)"
+
+prohibited_methods:
+  - "Contacting references without consent"
+  - "Pretexting to obtain information"
+  - "Accessing private social media content"
+  - "Running unauthorized credit checks"
+
+documentation_requirements:
+  - "Authorization/consent forms"
+  - "Permissible purpose documentation"
+  - "Sources accessed with dates"
+  - "Adverse action notices (if applicable)"
+
+validation_requirements:
+  - "Cross-verify adverse findings across multiple independent sources"
+  - "Confirm identity match before inclusion in final report"
+
+retention_and_disposal:
+  - "Retain collected information only as long as required by policy or law"
+  - "Securely dispose of sensitive records after retention period"
+
+security_controls:
+  - "Store collected data in access-controlled systems"
+  - "Limit access to authorized personnel"

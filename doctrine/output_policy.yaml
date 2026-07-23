@@ -1,0 +1,160 @@
+meta:
+  name: Anakrisis Output Policy
+  version: 1.0
+  purpose: Global response brevity and formatting rules for investigator-facing outputs.
+
+style:
+  mode: concise
+  tone: direct
+  format: bullets_first
+  avoid:
+    - long paragraphs
+    - repeated caveats
+    - generic explanations
+    - empty sections
+
+summary:
+  enabled: true
+  max_bullets: 3
+  lead_with_key_findings: true
+
+limits:
+  max_bullets_per_section: 7
+  target_lines_per_tool_response: 45
+  hard_limit_lines_per_tool_response: 80
+  max_words_per_bullet: 25
+  max_rationale_words: 30
+
+section_policy:
+  omit_empty_sections: true
+  collapse_low_priority_detail: true
+  use_plain_labels: true
+  prefer_actionable_items: true
+  lead_with_key_findings: true
+
+# Default priority order. Tool-specific overrides may supersede this ordering.
+priority_order:
+  - hard_stops
+  - risk_tier
+  - triggered_risks
+  - required_approvals
+  - mandatory_controls
+  - safe_next_steps
+  - recommended_pivots
+  - audit_notes
+
+exceptions:
+  allow_expansion_when:
+    - high_risk
+    - multiple_hard_stops
+    - severe_content_warning
+    - legal_escalation
+
+tool_overrides:
+  MissionBrief:
+    mode: decision_support
+    max_bullets_per_section: 7
+    include:
+      - classification
+      - risk_tier
+      - hard_stops
+      - required_approvals
+      - mandatory_controls
+      - safe_next_steps
+      - audit_checklist
+    suppress_if_empty:
+      - hard_stops
+      - required_approvals
+
+  CourseCorrection:
+    mode: decision_support
+    max_bullets_per_section: 5
+    include:
+      - phase_guidance
+      - risk_change
+      - escalation_alerts
+      - next_actions
+
+  RulesOfEngagement:
+    mode: safety_assessment
+    max_bullets_per_section: 6
+    include:
+      - risk_level
+      - warnings
+      - safer_alternatives
+
+  AssignTools:
+    mode: discovery
+    max_results: 15
+    max_results_per_category: 8
+    group_by_category: true
+    include:
+      - tool_name
+      - category
+      - rationale
+      - link
+      - cost
+      - account_required
+
+  TextAnalyzer:
+    mode: artifact_triage
+    max_bullets_per_section: 5
+    max_words_per_bullet: 20
+    include:
+      - language_detection
+      - translation
+      - key_artifacts
+      - osint_notes
+      - content_warnings
+      - recommended_pivots
+    suppress_if_empty:
+      - translation
+      - content_warnings
+
+  GraphBuilder:
+    mode: relationship_mapping
+    max_bullets_per_section: 10
+    max_words_per_bullet: 25
+    include:
+      - entities_identified
+      - relationships
+      - confidence_assessment
+      - supporting_evidence
+      - analyst_observations
+      - verification_needed
+      - recommended_pivots
+      - obsidian_graph_note
+    suppress_if_empty:
+      - analyst_observations
+      - recommended_pivots
+
+  ReportRedaction:
+    mode: publication_safety
+    max_bullets_per_section: 8
+    max_words_per_bullet: 25
+    include:
+      - selected_redaction_profile
+      - redacted_report
+      - redaction_log
+      - preserved_information
+      - residual_risk_assessment
+      - reviewer_notes
+    suppress_if_empty:
+      - reviewer_notes
+
+  ReportTemplate:
+    mode: template_generation
+    preserve_template_body: true
+    keep_metadata_header: true
+
+  CreateCase:
+    mode: confirmation
+    max_lines_per_tool_response: 12
+    include:
+      - case_path
+      - created_files
+      - next_step
+
+fallback:
+  if_too_long: Summarize to highest-priority findings only.
+  if_no_findings: Return a short confirmation and one recommended next step.

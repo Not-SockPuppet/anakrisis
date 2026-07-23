@@ -1,0 +1,92 @@
+# Anakrisis Disallowed Actions
+# Explicit hard stops and red flags for OSINT investigations
+
+version: "1.0"
+description: "Actions that are prohibited or require special authorization"
+
+# Deterministic hard stops (preferred). These rules are evaluated by anakrisis.py
+# via get_hard_stops() against the normalized `constraints` field.
+# Legacy lists below remain for backward compatibility during migration.
+rules:
+  - id: "HS_IMPERSONATION"
+    text: "Creating accounts impersonating others"
+    triggers:
+      - type: "contains_any"
+        field: "constraints"
+        values: ["impersonate", "impersonation", "pretend to be", "sockpuppet", "alias account"]
+
+  - id: "HS_BYPASS_ACCESS_CONTROLS"
+    text: "Bypassing authentication or access controls"
+    triggers:
+      - type: "contains_any"
+        field: "constraints"
+        values: ["bypass", "circumvent", "evade"]
+
+  - id: "HS_SOCIAL_ENGINEERING_PRETEXTING"
+    text: "Social engineering or pretexting target individuals"
+    triggers:
+      - type: "contains_any"
+        field: "constraints"
+        values: ["social engineering", "pretext", "pretexting", "pose as", "deceive", "phish", "phishing"]
+
+  - id: "HS_MALWARE_EXPLOITS_OR_DISRUPTION"
+    text: "Distributing malware/exploits or disrupting services"
+    triggers:
+      - type: "contains_any"
+        field: "constraints"
+        values: ["malware", "exploit", "payload", "ransomware", "ddos", "service disruption", "take down"]
+
+  - id: "HS_ILLEGAL_SEXUAL_CONTENT_MINORS"
+    text: "Accessing or sharing illegal sexual content involving minors"
+    triggers:
+      - type: "contains_any"
+        field: "constraints"
+        values: ["csam", "child sexual", "illegal sexual content"]
+
+# NOTE: The legacy lists below are documentation/back-compat; only `rules:` are deterministically evaluated.
+baseline_prohibited:
+  - "Creating impersonating accounts"
+  - "Bypassing authentication or access controls"
+  - "Unauthorized access to private systems or accounts"
+  - "Social engineering or pretexting target individuals"
+  - "Violating platform Terms of Service"
+  - "Bulk scraping without authorization"
+  - "Automated account creation"
+  - "Distributing malware or exploits"
+  - "DDoS or service disruption"
+  - "Accessing or sharing CSAM or illegal content"
+
+passive_only_prohibited:
+  - "Sending messages or friend requests to targets"
+  - "Logging into accounts or services"
+  - "Submitting forms or queries that alert targets"
+  - "Interacting with target's content (likes, comments, shares)"
+  - "Running active network scans"
+  - "Using tools that generate notifications"
+
+unauthorized_prohibited:
+  - "Accessing non-public information"
+  - "Using investigative techniques requiring legal authority"
+  - "Collecting information on minors"
+  - "Investigating protected categories without proper authority"
+  - "Sharing findings with unauthorized parties"
+
+# Advisory taxonomies (not currently evaluated by anakrisis.py). Keep for documentation/UI,
+# or migrate selected items into `rules:` if you want them to be enforceable hard stops.
+tos_violations:
+  - scraping: "Automated data collection often violates Terms of Service"
+  - automation: "Bulk automated actions typically prohibited"
+  - impersonation_accounts: "Creating impersonation accounts violates most platforms' ToS"
+  - api_abuse: "Exceeding rate limits or using APIs for prohibited purposes"
+
+privacy_violations:
+  - doxxing: "Publishing private information to cause harm"
+  - stalking: "Persistent unwanted monitoring or following"
+  - impersonation: "Pretending to be someone else"
+  - surveillance: "Non-consensual real-time tracking"
+
+legal_violations:
+  - unauthorized_access: "CFAA and similar laws prohibit unauthorized computer access"
+  - wiretapping: "Intercepting communications without authority"
+  - identity_theft: "Using another's identity"
+  - harassment: "Repeated unwanted contact"

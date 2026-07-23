@@ -1,0 +1,73 @@
+# General Investigation Playbook
+
+investigation_type: "general_investigation"
+description: "Default playbook for unspecified investigation types"
+note: "Applicable legal and regulatory requirements vary by jurisdiction and investigation purpose."
+
+risk_baseline: "medium"
+
+phases:
+  - intake
+  - planning
+  - discovery
+  - validation
+  - reporting
+
+safe_first_steps:
+  - "Clearly define investigation objectives"
+  - "Identify legal and ethical constraints"
+  - "Verify authorization and scope"
+  - "Map available public information sources"
+  - "Establish documentation procedures"
+  - "Plan passive-first approach"
+  - "Limit collection to information directly relevant to defined objectives"
+  - "Confirm subject/entity identity using multiple identifiers before attributing findings"
+
+authorization_requirements:
+  - "Clear statement of purpose and authority"
+  - "Approval from appropriate supervisor"
+  - "Legal review if uncertain about methods"
+  - "Defined scope boundaries documented before discovery phase"
+  - "Defined, documented purpose for collection and use of information"
+  - "Use limited strictly to authorized purpose"
+
+data_sources:
+  allowed:
+    - "Public records"
+    - "Published information"
+    - "Publicly visible social media"
+    - "Commercial databases (with proper licensing)"
+  restricted:
+    - "Non-public information (requires specific authority)"
+    - "Sensitive personal data (health, financial, biometric, protected class information)"
+
+prohibited_methods:
+  - "Deception or impersonation"
+  - "Unauthorized access"
+  - "Circumventing access controls or violating platform Terms of Service"
+  - "Intrusion into private, non-public information without lawful authority"
+
+validation_requirements:
+  - "Cross-verify significant findings across independent sources"
+  - "Distinguish clearly between fact and analytic inference in reporting"
+
+best_practices:
+  - "Start with broadest public sources"
+  - "Document everything with timestamps"
+  - "Cross-verify information"
+  - "Respect privacy and dignity"
+  - "Escalate when risk tier increases or uncertainty persists"
+  - "Maintain audit trail"
+
+retention_and_disposal:
+  - "Retain collected information only as long as required by policy or law"
+  - "Securely dispose of sensitive records after retention period"
+
+security_controls:
+  - "Store collected data in access-controlled systems"
+  - "Limit access to authorized personnel"
+
+methods_explicitly_not_used:
+  - "Intrusive access without lawful authority"
+  - "Pretexting or deceptive engagement"
+  - "Automated bulk collection where prohibited by policy or law"
