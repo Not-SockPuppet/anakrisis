@@ -205,3 +205,7 @@ Anakrisis follows the liability model of established security tooling:
 ## Responsible use
 
 Anakrisis produces advisory guidance only. It does not validate the legality of any action, does not constitute legal advice, and does not prevent misuse. Risk tiers and warnings are heuristic aids, not compliance determinations. You are solely responsible for ensuring your investigative activities comply with applicable laws, platform terms of service, and your organization's policies. Do not feed the system live personal data it does not need, and never treat its output as authorization to act.
+
+## License
+
+[MIT](LICENSE)
