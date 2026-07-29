@@ -407,6 +407,39 @@ def render_section(title: str, items, max_items: int = 7, omit_empty: bool = Tru
     return f"\n## {title}\n{render_bullets(clean, max_items)}"
 
 
+def render_output_policy_block(tool_name: str) -> str:
+    """Render presentation rules for the host LLM to apply when relaying a tool result.
+
+    Deterministic tools build their output in Python, so the host model never sees
+    the doctrine that governs presentation. Appending this block gives it the same
+    policy the prompt-building tools embed directly.
+    """
+    merged = get_tool_output_policy(tool_name)
+    if not merged:
+        return ""
+
+    policy = load_output_policy()
+    if isinstance(policy, dict):
+        order = policy.get("priority_order")
+        if isinstance(order, list) and order and "priority_order" not in merged:
+            merged = {**merged, "priority_order": order}
+
+    try:
+        policy_yaml = yaml.safe_dump(merged, sort_keys=False, allow_unicode=True).strip()
+    except Exception:
+        logger.warning(f"Could not serialize output policy for {tool_name}")
+        return ""
+
+    return f"""
+
+---
+📐 {tool_name.upper()} OUTPUT POLICY (applies to how you relay this result):
+{policy_yaml}
+
+- Follow this policy when presenting the result above.
+- Content controls: do not drop findings, hard stops, or approvals to meet a limit.
+- Do not add caveats, restatements, or commentary beyond what this result contains."""
+
 
 def build_text_analyzer_prompt(text: str, investigator_language: str = "", constraints: str = "") -> str | None:
     """Build a doctrine-bound prompt for host-LLM TextAnalyzer execution."""
@@ -678,6 +711,7 @@ async def CreateCase(case_name: str = "", overwrite: bool = False) -> str:
             f"- Created folders: {created_dirs}\n"
             f"- Created files: {created_files}\n"
             f"- Next: open objective.md and define scope, constraints, and success criteria."
+            + render_output_policy_block("CreateCase")
         )
 
     except Exception as e:
@@ -982,46 +1016,89 @@ def get_safe_first_steps(investigation_types):
             out.append(x)
     return out
 
+VALID_RISK_CATEGORIES = ("tos_risk", "privacy_risk", "legal_risk", "operational_risk")
+
+
+def _action_rule_matches(rule: dict, haystack: str) -> str | None:
+    """Evaluate one action rule against text. Returns the matched phrase, or None.
+
+    Supports two trigger types:
+      contains_any -- any listed phrase appears as a substring
+      all_of       -- every listed token appears somewhere, in any order.
+                      Needed because literal phrase matching breaks the moment a
+                      user writes "fake Instagram account" instead of "fake account".
+    """
+    triggers = rule.get("triggers", [])
+    if not isinstance(triggers, list):
+        return None
+
+    for trigger in triggers:
+        if not isinstance(trigger, dict):
+            continue
+        values = trigger.get("values", [])
+        if not isinstance(values, list) or not values:
+            continue
+        ttype = str(trigger.get("type", "contains_any")).strip()
+        tokens = [str(v).lower().strip() for v in values if str(v).strip()]
+
+        if ttype == "all_of":
+            if tokens and all(tok in haystack for tok in tokens):
+                return " + ".join(tokens)
+        else:
+            for tok in tokens:
+                if tok in haystack:
+                    return tok
+    return None
+
+
 def check_action_safety(proposed_action, context):
-    """Check proposed action against safety rules and provide warnings."""
-    warnings = {
-        "tos_risk": [],
-        "privacy_risk": [],
-        "legal_risk": [],
-        "operational_risk": []
-    }
-    
+    """Check a proposed action against doctrine action rules.
+
+    Returns (warnings, hard_stops, matched_any):
+      warnings    -- dict of category -> list of warning strings
+      hard_stops  -- list of prohibited-action strings that matched
+      matched_any -- whether ANY rule fired
+
+    matched_any is returned separately so the caller can distinguish
+    "reviewed and clean" from "nothing in the ruleset recognized this".
+    Those are not the same result and must not render the same way.
+    """
+    warnings = {cat: [] for cat in VALID_RISK_CATEGORIES}
+    hard_stops: list[str] = []
+
     action_lower = (proposed_action or "").lower()
     context_lower = (context or "").lower()
-    
-    # Check for TOS violations
-    tos_triggers = ["bypass rate limits", "bulk download"]
-    for trigger in tos_triggers:
-        if trigger in action_lower:
-            warnings["tos_risk"].append(f"Action involves '{trigger}' which commonly violates Terms of Service")
-    
-    # Check for privacy violations
-    privacy_triggers = ["login", "impersonate", "social engineering", "pretexting", "fake account"]
-    for trigger in privacy_triggers:
-        if trigger in action_lower:
-            warnings["privacy_risk"].append(f"Action involves '{trigger}' which raises serious privacy concerns")
-    
-    # Check for legal issues
-    legal_triggers = ["hack", "bypass", "unauthorized access", "breach", "exploit"]
-    for trigger in legal_triggers:
-        if trigger in action_lower:
-            warnings["legal_risk"].append(f"Action involves '{trigger}' which may be illegal")
-    
-    # Check for operational harm
-    operational_triggers = ["flood", "spam", "ddos", "overload", "mass query"]
-    for trigger in operational_triggers:
-        if trigger in action_lower:
-            warnings["operational_risk"].append(f"Action involves '{trigger}' which may cause service disruption")
+    haystack = f"{action_lower}\n{context_lower}"
 
-    # NOTE: Authorization is no longer auto-flagged. Quiet-by-default model only
-    # warns when the proposed action actually trips a trigger above. Authorization
-    # reminders are surfaced in the "Before Proceeding" checklist once warnings fire.
-    return warnings
+    disallowed = load_disallowed_actions()
+    if not isinstance(disallowed, dict):
+        logger.warning("disallowed_actions.yaml did not load as a dict; action rules unavailable")
+        disallowed = {}
+
+    action_rules = disallowed.get("action_rules", [])
+    if not isinstance(action_rules, list) or not action_rules:
+        logger.warning("No action_rules found in disallowed_actions.yaml; RulesOfEngagement is running blind")
+        action_rules = []
+
+    for rule in action_rules:
+        if not isinstance(rule, dict):
+            continue
+        matched = _action_rule_matches(rule, haystack)
+        if not matched:
+            continue
+
+        text = str(rule.get("text") or rule.get("id") or "Disallowed action").strip()
+        severity = str(rule.get("severity", "elevated")).strip().lower()
+        category = str(rule.get("category", "privacy_risk")).strip()
+        if category not in warnings:
+            category = "privacy_risk"
+
+        warnings[category].append(f"{text} (matched: {matched})")
+        if severity == "hard_stop":
+            hard_stops.append(text)
+
+    matched_any = bool(hard_stops) or any(warnings[c] for c in warnings)
+    return warnings, hard_stops, matched_any
 
 def get_safer_alternatives(proposed_action):
     """Suggest safer alternatives to risky actions."""
@@ -1042,7 +1119,23 @@ def get_safer_alternatives(proposed_action):
         alternatives.append("Manual, targeted collection within rate limits")
         alternatives.append("Use platforms with terms allowing research access")
         alternatives.append("Partner with academic or commercial providers")
-    
+
+    if any(k in action_lower for k in ("fake", "impersonate", "pose as", "false identity",
+                                       "burner", "sock puppet", "sockpuppet", "pretext")):
+        alternatives.append("Treat restricted content as out of scope; collect only what is public without an account")
+        alternatives.append("Request the material through discovery or a records request")
+        alternatives.append("Build the record from dated public activity across independent sources")
+
+    if any(k in action_lower for k in ("follow request", "friend request", "connection request",
+                                       "message", "contact", "reach out")):
+        alternatives.append("Do not initiate contact; route any approach through counsel of record")
+        alternatives.append("Rely on content visible without interaction, and log the visibility state")
+
+    if any(k in action_lower for k in ("private post", "private account", "private profile",
+                                       "restricted content", "non-public")):
+        alternatives.append("Use lawful process — subpoena, discovery request, or platform legal channel")
+        alternatives.append("Document that the content was restricted and not accessed")
+
     if not alternatives:
         alternatives.append("Consult with legal counsel before proceeding")
         alternatives.append("Use passive collection methods only")
@@ -1217,9 +1310,10 @@ async def MissionBrief(
 
         if triggered and followups:
             response += "\n\n🔎 Follow-up (to narrow legal/risk guidance):\n" + "\n".join(f"- {q}" for q in followups)
-        
+
+        response += render_output_policy_block("MissionBrief")
         return response
-        
+
     except Exception as e:
         logger.error(f"Error in MissionBrief: {e}")
         return f"❌ Error: {str(e)}"
@@ -1318,6 +1412,7 @@ async def CourseCorrection(current_phase: str = "", new_artifacts: str = "", con
                 ], max_items),
             ])
         response = "\n".join(part for part in response_parts if part)
+        response += render_output_policy_block("CourseCorrection")
         return response
 
     except Exception as e:
@@ -1421,27 +1516,29 @@ async def RulesOfEngagement(proposed_action: str = "", context: str = "") -> str
         output_policy = get_tool_output_policy("RulesOfEngagement")
         max_items = _policy_int(output_policy, "max_bullets_per_section", 6, maximum=10)
         # Check action safety
-        warnings = check_action_safety(proposed_action, context)
+        warnings, hard_stops, matched_any = check_action_safety(proposed_action, context)
 
-        # Determine overall safety assessment
         total_warnings = sum(len(w) for w in warnings.values())
 
-        # Quiet by default: if the proposed action trips no ToS, privacy, legal,
-        # or operational trigger, return a short clean review instead of a warning.
-        if total_warnings == 0:
+        # No rule fired. This is NOT a clearance -- the ruleset is finite and an
+        # unrecognized action is unassessed, not safe. Say so plainly.
+        if not matched_any:
             return "\n".join(part for part in [
                 "🔍 ACTION REVIEW",
                 render_section("Key Findings", [
-                    "Safety level: ✅ No risk flags detected.",
-                    "This action did not match any known ToS, privacy, legal, or operational trigger.",
-                    "Proceed per your standard authorization and documentation practices.",
+                    "Safety level: ⚪ No rule matched — NOT a clearance.",
+                    "No doctrine action rule recognized this description. Unassessed is not the same as safe.",
+                    "Confirm the action is passive, authorized, and within scope before proceeding.",
+                    "If the action involves a target individual, restate it plainly and re-run this check.",
                 ], max_items),
-            ] if part)
+            ] if part) + render_output_policy_block("RulesOfEngagement")
 
-        # Get safer alternatives (only relevant once something has triggered)
         alternatives = get_safer_alternatives(proposed_action)
 
-        if total_warnings >= 3:
+        if hard_stops:
+            safety_level = "🛑 PROHIBITED - HARD STOP"
+            recommendation = "This action is disallowed by doctrine. Do not proceed. No authorization level clears a hard stop."
+        elif total_warnings >= 3:
             safety_level = "🛑 HIGH RISK - REVIEW REQUIRED"
             recommendation = "This action requires review and authorization. Consider appropriate oversight."
         else:
@@ -1454,22 +1551,33 @@ async def RulesOfEngagement(proposed_action: str = "", context: str = "") -> str
             for warning in values:
                 warning_items.append(f"{label}: {warning}")
 
+        header = "🛑 ACTION PROHIBITED" if hard_stops else "🚨 ACTION SAFETY ASSESSMENT"
         response_parts = [
-            "🚨 ACTION SAFETY ASSESSMENT",
+            header,
             render_section("Key Findings", [
                 f"Safety level: {safety_level}",
                 recommendation,
             ], max_items),
+            render_section("Hard Stops", hard_stops, max_items),
             render_section("Warnings", warning_items, max_items),
             render_section("Safer Alternatives", alternatives, max_items),
-            render_section("Before Proceeding", [
-                "Verify explicit authorization.",
-                "Review applicable Terms of Service.",
-                "Use the least invasive method available.",
-                "Document legal basis and oversight.",
-            ], max_items),
+            render_section(
+                "Do Not Proceed" if hard_stops else "Before Proceeding",
+                [
+                    "A hard stop cannot be cleared by authorization or supervisor approval.",
+                    "Log the request and the refusal in the case record.",
+                    "Re-scope to a lawful alternative above, then re-run this check.",
+                ] if hard_stops else [
+                    "Verify explicit authorization.",
+                    "Review applicable Terms of Service.",
+                    "Use the least invasive method available.",
+                    "Document legal basis and oversight.",
+                ],
+                max_items,
+            ),
         ]
         response = "\n".join(part for part in response_parts if part)
+        response += render_output_policy_block("RulesOfEngagement")
         return response
     except Exception as e:
         logger.error(f"Error in RulesOfEngagement: {e}")
@@ -1519,8 +1627,9 @@ Generated: [Insert Date/Time]
 - Have report reviewed before distribution
 """
 
+        response += render_output_policy_block("ReportTemplate")
         return response
-        
+
     except Exception as e:
         logger.error(f"Error in ReportTemplate: {e}")
         return f"❌ Error: {str(e)}"
@@ -1825,7 +1934,7 @@ Note: This tool only recommends external resources from a local catalog.
         "- Document sources, timestamps, and methodology."
     )
 
-    return "\n".join(lines)
+    return "\n".join(lines) + render_output_policy_block("AssignTools")
 
 # === SERVER STARTUP ===
 if __name__ == "__main__":

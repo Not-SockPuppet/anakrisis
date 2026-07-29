@@ -43,7 +43,150 @@ rules:
         field: "constraints"
         values: ["csam", "child sexual", "illegal sexual content"]
 
-# NOTE: The legacy lists below are documentation/back-compat; only `rules:` are deterministically evaluated.
+# Action-scoped rules. Evaluated by check_action_safety() against the
+# `proposed_action` and `context` fields of RulesOfEngagement.
+#
+# The `rules:` block above matches the investigator's declared *constraints*.
+# These match the action the investigator is proposing to take, which is a
+# different question and needs its own vocabulary.
+#
+# Trigger types:
+#   contains_any: match if ANY listed phrase appears
+#   all_of:       match if ALL listed tokens appear anywhere, in any order.
+#                 Use for multi-word concepts that take interposed words --
+#                 "fake account" must still catch "fake Instagram account".
+#
+# severity: hard_stop | high | elevated
+# category: tos_risk | privacy_risk | legal_risk | operational_risk
+action_rules:
+  - id: "AR_FABRICATED_ACCOUNT"
+    text: "Creating a fabricated or impersonating account to view or reach a target"
+    severity: "hard_stop"
+    category: "privacy_risk"
+    triggers:
+      - type: "contains_any"
+        values: ["impersonate", "impersonation", "sock puppet", "sockpuppet",
+                 "catfish", "pose as", "pretend to be", "false identity",
+                 "fictitious identity", "burner account", "throwaway account",
+                 "alias account", "dummy account"]
+      # all_of pairs so a qualifier between the words cannot defeat the match:
+      # "fake Instagram account", "burner IG profile", "throwaway research persona".
+      - type: "all_of"
+        values: ["fake", "account"]
+      - type: "all_of"
+        values: ["fake", "profile"]
+      - type: "all_of"
+        values: ["fake", "persona"]
+      - type: "all_of"
+        values: ["fake", "page"]
+      - type: "all_of"
+        values: ["burner", "account"]
+      - type: "all_of"
+        values: ["burner", "profile"]
+      - type: "all_of"
+        values: ["burner", "persona"]
+      - type: "all_of"
+        values: ["throwaway", "account"]
+      - type: "all_of"
+        values: ["throwaway", "profile"]
+      - type: "all_of"
+        values: ["dummy", "account"]
+      - type: "all_of"
+        values: ["dummy", "profile"]
+      - type: "all_of"
+        values: ["anonymous", "account"]
+      - type: "all_of"
+        values: ["second", "account"]
+
+  - id: "AR_PRETEXTING"
+    text: "Social engineering or pretexting a target individual"
+    severity: "hard_stop"
+    category: "privacy_risk"
+    triggers:
+      - type: "contains_any"
+        values: ["social engineering", "pretext", "pretexting", "phish", "phishing",
+                 "deceive", "under false pretenses", "elicitation", "cover story"]
+
+  - id: "AR_TARGET_CONTACT"
+    text: "Contacting or interacting with the target -- breaks passive-only scope and alerts them"
+    severity: "hard_stop"
+    category: "operational_risk"
+    triggers:
+      - type: "contains_any"
+        values: ["follow request", "friend request", "connection request",
+                 "connect with", "message the", "dm the", "direct message",
+                 "reach out to", "contact the target", "contact the subject",
+                 "contact the claimant", "interview the"]
+      - type: "all_of"
+        values: ["send", "request"]
+
+  - id: "AR_RESTRICTED_CONTENT_ACCESS"
+    text: "Accessing non-public content the target has restricted"
+    severity: "hard_stop"
+    category: "legal_risk"
+    triggers:
+      - type: "contains_any"
+        values: ["private posts", "private account", "private profile",
+                 "restricted content", "friends-only", "followers-only",
+                 "locked account", "non-public information"]
+      - type: "all_of"
+        values: ["view", "private"]
+      - type: "all_of"
+        values: ["access", "private"]
+
+  - id: "AR_AUTH_BYPASS"
+    text: "Bypassing authentication, access controls, or platform restrictions"
+    severity: "hard_stop"
+    category: "legal_risk"
+    triggers:
+      - type: "contains_any"
+        values: ["hack", "unauthorized access", "breach", "brute force",
+                 "credential stuffing", "exploit", "sql injection",
+                 "bypass", "circumvent", "evade detection", "defeat the"]
+
+  - id: "AR_TOS_AUTOMATION"
+    text: "Automated or bulk collection that commonly violates platform Terms of Service"
+    severity: "elevated"
+    category: "tos_risk"
+    triggers:
+      - type: "contains_any"
+        values: ["scrape", "scraping", "crawler", "bulk download", "bulk collect",
+                 "mass download", "bypass rate limits", "rate limit", "api abuse",
+                 "automated account creation", "botnet"]
+
+  - id: "AR_SERVICE_DISRUPTION"
+    text: "Actions that may disrupt or degrade a service"
+    severity: "hard_stop"
+    category: "operational_risk"
+    triggers:
+      - type: "contains_any"
+        values: ["ddos", "dos attack", "flood", "spam", "overload",
+                 "mass query", "denial of service", "take down", "malware",
+                 "ransomware", "payload"]
+
+  - id: "AR_PHYSICAL_SURVEILLANCE"
+    text: "Physical surveillance or real-time tracking of an individual"
+    severity: "high"
+    category: "privacy_risk"
+    triggers:
+      - type: "contains_any"
+        values: ["physical surveillance", "stake out", "stakeout", "tail the",
+                 "follow him", "follow her", "follow them", "gps tracker",
+                 "track his location", "track her location", "real-time tracking"]
+
+  - id: "AR_CREDENTIAL_USE"
+    text: "Logging into accounts or using credentials to expand access"
+    severity: "high"
+    category: "legal_risk"
+    triggers:
+      - type: "contains_any"
+        values: ["log into", "login to", "log in to", "sign into",
+                 "use his password", "use her password", "use their password",
+                 "shared credentials", "leaked credentials"]
+
+
+# NOTE: The legacy lists below are documentation/back-compat; only `rules:` and
+# `action_rules:` are deterministically evaluated.
 baseline_prohibited:
   - "Creating impersonating accounts"
   - "Bypassing authentication or access controls"
