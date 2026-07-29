@@ -29,7 +29,7 @@ Nine MCP tools cover the investigation lifecycle from intake to publication:
 |---|---|---|
 | `MissionBrief` | Planning | Classify the investigation, assign a risk tier, list hard stops and safe first steps |
 | `CourseCorrection` | Any | Phase-specific guidance and risk re-assessment as new artifacts emerge |
-| `RulesOfEngagement` | Pre-action | Advisory interlock: flag ToS, privacy, legal, and operational risks; suggest safer alternatives |
+| `RulesOfEngagement` | Pre-action | Advisory interlock: flag ToS, privacy, legal, and operational risks; mark hard stops; suggest safer alternatives |
 | `CreateCase` | Intake | Scaffold a structured case workspace on disk |
 | `TextAnalyzer` | Analysis | Doctrine-guided triage of messages, posts, and other textual artifacts |
 | `GraphBuilder` | Analysis | Doctrine-guided entity and relationship mapping from case notes |
@@ -47,7 +47,7 @@ Mid-investigation guidance for the five lifecycle phases — `intake`, `planning
 
 ### RulesOfEngagement
 
-Call before executing a potentially risky action. Scans the proposed action for terms-of-service, privacy, legal, and operational exposure, classifies overall action risk, and suggests safer alternatives. Advisory only — it flags, it does not block.
+Call before executing a potentially risky action. Evaluates the proposed action against the `action_rules:` block in `doctrine/disallowed_actions.yaml`, covering terms-of-service, privacy, legal, and operational exposure, and suggests safer alternatives. Rules marked `hard_stop` render as a prohibition that authorization cannot clear. A call that matches no rule is reported as **unassessed, not cleared** — the ruleset is finite, so silence is not approval. Advisory only: it flags, it does not block.
 
 ### CreateCase
 
@@ -89,7 +89,9 @@ Local YAML doctrine (doctrine/, playbooks/, report_templates/)
 
 All decision logic is driven by local configuration. The server loads doctrine, evaluates the user-described intent against it, and returns structured guidance. There are no API keys, no network calls, and no telemetry.
 
-**Quiet by default.** The advisory tools (`MissionBrief`, `CourseCorrection`, `RulesOfEngagement`) only surface warnings, hard stops, and approval checklists when the input actually trips a trigger — a substantive risk factor, a hard-stop rule from `doctrine/disallowed_actions.yaml`, or an action-safety keyword. Routine planning calls return clean planning output without boilerplate warnings. This gates presentation only; risk scoring itself is unchanged.
+**Quiet by default.** The advisory tools (`MissionBrief`, `CourseCorrection`, `RulesOfEngagement`) only surface warnings, hard stops, and approval checklists when the input actually trips a trigger — a substantive risk factor, a hard-stop rule from `doctrine/disallowed_actions.yaml`, or an `action_rules:` match against the proposed action. Routine planning calls return clean planning output without boilerplate warnings. This gates presentation only; risk scoring itself is unchanged.
+
+**Quiet is not the same as clear.** Suppressing boilerplate must never read as approval. When `RulesOfEngagement` matches no rule, it says so — *unassessed, not cleared* — because the ruleset is finite and an unrecognized action has not been evaluated. Detection is keyword-based, so a deliberately euphemistic description can evade it. Treat a silent result as a prompt to restate the action plainly, not as a green light.
 
 ---
 

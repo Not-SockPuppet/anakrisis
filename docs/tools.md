@@ -131,20 +131,27 @@ Advisory interlock to run before executing a potentially risky action.
 
 ### What it produces
 
-The proposed action is checked against four keyword trigger families:
+The proposed action and context are evaluated against `action_rules:` in
+`doctrine/disallowed_actions.yaml`. Each rule carries a `severity`
+(`hard_stop` / `high` / `elevated`) and a risk `category`:
 
-- **ToS risk** — e.g., bypassing rate limits, bulk downloading
-- **Privacy risk** — e.g., logging in as the target, impersonation, pretexting, fake accounts
-- **Legal risk** — e.g., unauthorized access, breach, exploit
-- **Operational risk** — e.g., flooding, spam, mass querying, service disruption
+- **ToS risk** — scraping, bulk collection, rate-limit evasion, automated account creation
+- **Privacy risk** — fabricated or impersonating accounts, pretexting, physical surveillance
+- **Legal risk** — accessing restricted content, authentication bypass, credential use
+- **Operational risk** — contacting or interacting with the target, service disruption
 
-If nothing matches, the tool returns a short "Action Review" confirming that no risk
-flags were detected. If triggers match, it returns an "Action Safety Assessment" with
-a safety level (elevated risk for one or two warnings, high risk requiring review at
-three or more), the specific warnings, **Safer Alternatives** tailored to the action
-(official APIs instead of scraping, lawful process instead of account access, manual
-targeted collection instead of automation), and a **Before Proceeding** checklist
-(authorization, ToS review, least-invasive method, documented legal basis).
+Three outcomes:
+
+- **Hard stop matched** → `🛑 ACTION PROHIBITED`, listing each matched prohibition, the
+  triggering warnings, **Safer Alternatives**, and a **Do Not Proceed** block. Hard stops
+  are not clearable by authorization or supervisor approval.
+- **Warnings only** → `🚨 ACTION SAFETY ASSESSMENT` with a safety level (elevated for one
+  or two warnings, high risk requiring review at three or more), the warnings, **Safer
+  Alternatives**, and a **Before Proceeding** checklist.
+- **No rule matched** → `🔍 ACTION REVIEW` stating explicitly that this is **not** a
+  clearance. An unrecognized action is unassessed, not safe. The investigator is asked to
+  confirm the action is passive, authorized, and in scope, and to restate it plainly and
+  re-run if it involves a target individual.
 
 ### When to use
 
@@ -154,8 +161,11 @@ non-trivial collection — especially anything interactive or automated.
 ### Limits
 
 - Flags risk exposure; it does not block the action or make legality determinations.
-- Detection is keyword-based against the text of the proposed action; describing an
-  action euphemistically will not produce a meaningful review.
+- Detection is keyword-based against the text of the proposed action and context.
+  `all_of` triggers make multi-word concepts resilient to interposed words ("fake
+  Instagram account" matches `["fake", "account"]`), but a deliberately euphemistic
+  description can still evade the ruleset. This is why a no-match result is reported as
+  unassessed rather than clean.
 
 ---
 

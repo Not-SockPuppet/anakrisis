@@ -36,10 +36,16 @@ schema, evaluated in `anakrisis.py`:
 | `equals_any` | the field exactly equals one of `values` |
 | `not_contains_any` | none of `values` appears in the field (optionally gated with `evaluate_if_field_non_empty: true`) |
 | `missing_any` | any of the listed `fields` is empty after normalization (or, for enum fields, equals `unknown`) |
+| `all_of` | every token in `values` appears somewhere in the field, in any order (`action_rules` only) |
 
 All matching runs against normalized text: trimmed, lowercased, with internal
 whitespace collapsed. Write trigger `values` as lowercase phrases; multi-word phrases
 match as substrings of the normalized input.
+
+Because `contains_any` is literal, a multi-word phrase fails as soon as a qualifier
+appears between its words. Use `all_of` for multi-word concepts that need to survive
+that: `["fake", "account"]` matches "fake Instagram account", "fake burner account",
+and "fake IG page", none of which contain the literal string "fake account".
 
 ## Quiet-by-default presentation
 
@@ -50,17 +56,22 @@ sections surface only when the input actually trips a trigger:
 - a **substantive** risk factor fires — an action/intent signal such as bypass,
   impersonation, or automation, not merely missing optional planning fields;
 - a hard-stop rule in `disallowed_actions.yaml` matches the constraints text; or
-- an action-safety keyword (ToS / privacy / legal / operational) matches.
+- an `action_rules:` entry matches the proposed action or its context.
 
-Two consequences matter when authoring doctrine:
+Three consequences matter when authoring doctrine:
 
 1. `missing_any` factors still contribute to the score and tier, but on their own
    they never flip a tool into warning mode. Use them to lower assessment confidence,
    not to nag.
-2. Hard stops are sourced only from the deterministic `rules:` list in
-   `disallowed_actions.yaml`. The legacy static lists in that file are a fallback
+2. Constraint-scoped hard stops are sourced only from the deterministic `rules:` list
+   in `disallowed_actions.yaml`. The legacy static lists in that file are a fallback
    used only when no `rules:` are defined, which prevents the full prohibition list
    from being dumped on every call.
+3. **Quiet is not the same as clear.** Suppressing boilerplate must never read as
+   approval. `RulesOfEngagement` states explicitly that a no-match result is
+   unassessed rather than cleared, because the ruleset is finite and an unrecognized
+   action has not been evaluated. Preserve that distinction in any tool you add: an
+   empty warning set is an absence of evidence, not a clean bill of health.
 
 This gates *presentation* only. Classification, scoring, and tier mapping are
 unchanged whether or not the warning sections render.
@@ -105,26 +116,57 @@ stacked signals.
 
 ## doctrine/disallowed_actions.yaml
 
-Hard stops and prohibited-action taxonomies. Consumed by `MissionBrief` and
-`CourseCorrection` (via hard-stop evaluation against the `constraints` field).
+Hard stops and prohibited-action taxonomies. Two independently evaluated rule
+blocks, matching two different questions.
 
 | Top-level key | Contents |
 |---|---|
-| `rules` | Deterministic hard stops (preferred). Each has `id`, `text`, and `triggers` evaluated against the normalized constraints text |
+| `rules` | Hard stops matched against the investigator's declared **constraints**. Consumed by `MissionBrief` and `CourseCorrection`. Each has `id`, `text`, and `triggers` |
+| `action_rules` | Hard stops and risk warnings matched against the **proposed action** and context. Consumed by `RulesOfEngagement`. Each has `id`, `text`, `severity`, `category`, and `triggers` |
 | `baseline_prohibited`, `passive_only_prohibited`, `unauthorized_prohibited` | Legacy static lists, used only as a fallback when no `rules:` exist |
 | `tos_violations`, `privacy_violations`, `legal_violations` | Advisory taxonomies for documentation; not evaluated by the server |
 
-The shipped rules cover impersonation, bypassing access controls, social engineering
-and pretexting, malware/exploits/service disruption, and illegal sexual content
-involving minors.
+`rules:` covers impersonation, bypassing access controls, social engineering and
+pretexting, malware/exploits/service disruption, and illegal sexual content involving
+minors.
+
+`action_rules:` covers fabricated accounts, pretexting, target contact, restricted
+content access, authentication bypass, service disruption, physical surveillance,
+credential use, and ToS-violating automation.
+
+**Trigger types**
+
+| Type | Behavior |
+|---|---|
+| `contains_any` | Matches if any listed phrase appears as a substring |
+| `all_of` | Matches if every listed token appears anywhere, in any order |
+
+Use `all_of` for multi-word concepts. Literal phrase matching breaks the moment a
+qualifier lands between the words — `"fake account"` does not match "fake Instagram
+account", while `["fake", "account"]` does.
+
+**Severity, in `action_rules` only**
+
+| Value | Rendering |
+|---|---|
+| `hard_stop` | `🛑 ACTION PROHIBITED` with a Do Not Proceed block; not clearable by authorization |
+| `high` / `elevated` | Warning under the matched `category`, contributing to the overall risk level |
 
 **Customizing safely**
 
-- Add new hard stops as entries in `rules:` with a `contains_any` trigger on
-  `constraints`. Items placed only in the legacy lists will not fire while `rules:`
-  is non-empty.
+- Decide which block a new rule belongs in. A rule about what the investigator has
+  *declared* goes in `rules:`; a rule about what they are *about to do* goes in
+  `action_rules:`. Placing it in the wrong block means the tool that needs it will
+  never see it.
+- Items placed only in the legacy lists will not fire while `rules:` is non-empty.
 - Rule `text` is shown verbatim to the investigator; keep it a short, imperative
   prohibition.
+- Prefer plain description over jargon in trigger values. Investigators describe
+  actions in ordinary words, so `"follow request"` and `"private posts"` catch more
+  than `"pretexting"` alone.
+- A `RulesOfEngagement` call that matches nothing is reported as unassessed, not
+  cleared. Widening coverage is still worthwhile, but a gap in the ruleset does not
+  produce a false green light.
 
 ## doctrine/actor_profiles.yaml
 
