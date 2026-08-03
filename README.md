@@ -4,7 +4,9 @@
 
 Anakrisis is a [Model Context Protocol](https://modelcontextprotocol.io) server that brings structure, risk visibility, and documentation discipline to open-source intelligence work. It classifies investigations, scores risk against local YAML doctrine, flags prohibited actions, and scaffolds defensible case documentation — all before a single query leaves your machine.
 
-It is a decision-support layer, not a collection engine. Anakrisis never touches the internet.
+Anakrisis runs inside an AI agent, so agent-driven collection is absolutely on the table — web search, lookups, and live research are part of real investigative work, and Anakrisis is built to sit alongside them rather than pretend they don't happen. What it adds is everything *around* the collection: it plans the work, scores the risk before you act, flags hard stops, recommends the right tool for the artifact in front of you, and leaves you with a documented, defensible case afterwards.
+
+The Anakrisis tools themselves make no outbound network requests — they read local YAML doctrine and write to your disk. Collection is the agent's job; governing and structuring it is Anakrisis'.
 
 ---
 
@@ -12,10 +14,10 @@ It is a decision-support layer, not a collection engine. Anakrisis never touches
 
 | Anakrisis IS | Anakrisis is NOT |
 |---|---|
-| An investigation planning assistant | An OSINT data-collection tool |
-| A risk classification engine (LOW / MEDIUM / HIGH) | A scraping or automation framework |
-| A policy and doctrine interpretation layer | A verification or attribution service |
-| A documentation and case-structure aid | A bypass, evasion, or anonymity tool |
+| A governance layer for agent-driven collection | A verification or attribution service |
+| A risk classification engine (LOW / MEDIUM / HIGH) | A bypass, evasion, or anonymity tool |
+| A policy and doctrine interpretation layer | A scraper or automation framework in its own right |
+| An investigation planning and documentation aid | A substitute for your own legal judgement |
 
 The advisory model is deliberate: Anakrisis surfaces warnings, hard stops, and safer alternatives, but it does not halt execution. **Operational decisions — and responsibility for them — remain with the investigator.**
 
@@ -55,7 +57,7 @@ Creates a case workspace under `~/anakrisis/cases/<case_name>/` with standard fi
 
 ### TextAnalyzer
 
-Doctrine-guided analysis of textual artifacts (emails, chat logs, posts). Surfaces high-value intelligence and pivotable artifacts, highlights PII, notes intent and tone, flags concerning content, and recommends passive pivots — analysis and triage only, no collection.
+Doctrine-guided analysis of textual artifacts (emails, chat logs, posts). Surfaces high-value intelligence and pivotable artifacts, highlights PII, notes intent and tone, flags concerning content, and recommends passive pivots. The tool works only on text you supply and performs no collection itself — acting on the pivots it suggests is the agent's job.
 
 ### GraphBuilder
 

@@ -69,7 +69,9 @@ materially.
 
 ### Limits
 
-- Does not collect, search, or verify anything; it evaluates only the text you supply.
+- Performs no collection, search, or verification of its own; it evaluates only the text
+  you supply. Your agent can and will go collect — this is the tool you run beforehand to
+  decide what collecting is worth the risk.
 - Does not halt or gate execution — approvals and controls are advisory.
 - Classification is keyword-based and intentionally coarse; it selects playbooks and
   framing, not legal conclusions.
@@ -327,7 +329,9 @@ threatening posts, chat exports.
 
 ### Limits
 
-- Analysis and triage aid only: it does not collect data, scrape, or execute pivots.
+- Analysis and triage aid: it does not itself collect, scrape, or execute the pivots it
+  recommends — executing them is the agent's job, and worth running past
+  `RulesOfEngagement` first.
 - PII in the submitted text is deliberately surfaced, not redacted — this tool is for
   investigator triage, not publication (use `ReportRedaction` for that).
 - Content warnings fire only on direct indicators in the text, not vague topic
