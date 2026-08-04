@@ -21,6 +21,21 @@ The Anakrisis tools themselves make no outbound network requests — they read l
 
 The advisory model is deliberate: Anakrisis surfaces warnings, hard stops, and safer alternatives, but it does not halt execution. **Operational decisions — and responsibility for them — remain with the investigator.**
 
+### On research personas
+
+Anakrisis permits non-attributable research personas — "sock puppets" — and treats them as good operational security rather than as a violation. Viewing a target from your own account leaks your identity to them, and on several platforms actively notifies them; a persona is how you avoid that.
+
+The line is drawn at *interaction*, not at the account:
+
+| Permitted, and encouraged | Hard stop |
+|---|---|
+| Creating a non-attributable persona to view public content | Posing as a real, identifiable person |
+| Viewing public profiles, posts, and pages while logged in as that persona | Any follow, request, message, comment, reaction, or story view directed at the target |
+
+Two consequences worth being explicit about. A persona buys you **unattributed viewing of public material** — it does not unlock private content, because reaching that requires a follow request, which is interaction. And a logged-in view is not automatically silent: LinkedIn profile views and Instagram or Snapchat story views notify the account holder, so "passive" from your side is not always passive from theirs. Authenticated persona viewing is classified `passive_plus`, not `passive_only`, for exactly that reason.
+
+Most platforms prohibit secondary accounts in their terms regardless of purpose. Anakrisis surfaces that as an `elevated` ToS warning rather than pretending it away — the intent is that you accept and record the risk, not that you never take it.
+
 ---
 
 ## Tools

@@ -137,10 +137,10 @@ The proposed action and context are evaluated against `action_rules:` in
 `doctrine/disallowed_actions.yaml`. Each rule carries a `severity`
 (`hard_stop` / `high` / `elevated`) and a risk `category`:
 
-- **ToS risk** — scraping, bulk collection, rate-limit evasion, automated account creation
-- **Privacy risk** — fabricated or impersonating accounts, pretexting, physical surveillance
-- **Legal risk** — accessing restricted content, authentication bypass, credential use
-- **Operational risk** — contacting or interacting with the target, service disruption
+- **ToS risk** — scraping, bulk collection, rate-limit evasion, research-persona accounts
+- **Privacy risk** — pretexting, physical surveillance
+- **Legal risk** — impersonating a real person, accessing restricted content, authentication bypass, credential use
+- **Operational risk** — contacting or interacting with the target (including from a research persona), service disruption
 
 Three outcomes:
 

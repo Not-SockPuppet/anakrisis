@@ -240,21 +240,27 @@ risk_factors:
         values: ["reach out", "contact", "interview", "confront", "sting"]
         explain_text: "Goal references direct interaction."
 
+  # Scoped to impersonating a real person and to pretexting. A non-attributable
+  # research persona used for viewing is permitted doctrine and must NOT score here --
+  # "sockpuppet", "fake profile", and "fake identity" were removed for that reason.
+  # Persona use surfaces as an elevated ToS warning (AR_RESEARCH_PERSONA), not as
+  # +5 toward the risk tier. Using a persona to *interact* still scores via
+  # RF_DIRECT_CONTACT and hard-stops via AR_TARGET_CONTACT.
   - id: "RF_DECEPTION_OR_IMPERSONATION"
     name: "Deception or impersonation intent"
     score: 5
-    description: "The plan includes deception, impersonation, pretexting, or misrepresentation."
-    rationale: "Deception increases ethical and legal exposure and can create harm."
+    description: "The plan includes impersonating a real person, pretexting, or misrepresentation."
+    rationale: "Borrowing a real identity, or deceiving a person into disclosing, increases ethical and legal exposure and can create harm."
     evidence_fields: ["constraints", "goal"]
     triggers:
       - type: "contains_any"
         field: "constraints"
-        values: ["impersonate", "pretend to be", "pose as", "use pretexting", "pretext them", "catfish", "fake profile", "sockpuppet", "misrepresent myself"]
-        explain_text: "Plan includes deception/impersonation/pretexting."
+        values: ["impersonate", "pretend to be", "pose as", "use pretexting", "pretext them", "catfish", "identity theft", "misrepresent myself"]
+        explain_text: "Plan includes impersonation of a real person, or pretexting."
       - type: "contains_any"
         field: "goal"
-        values: ["impersonate", "use pretexting", "pretext them", "fake identity", "pose as", "create a fake profile"]
-        explain_text: "Goal includes deception/impersonation/pretexting."
+        values: ["impersonate", "use pretexting", "pretext them", "pose as", "steal their identity"]
+        explain_text: "Goal includes impersonation of a real person, or pretexting."
 
   - id: "RF_AUTOMATION_OR_BULK"
     name: "Automation or bulk collection referenced"

@@ -130,9 +130,18 @@ blocks, matching two different questions.
 pretexting, malware/exploits/service disruption, and illegal sexual content involving
 minors.
 
-`action_rules:` covers fabricated accounts, pretexting, target contact, restricted
-content access, authentication bypass, service disruption, physical surveillance,
-credential use, and ToS-violating automation.
+`action_rules:` covers impersonation of a real person, research-persona use, pretexting,
+target contact, restricted content access, authentication bypass, service disruption,
+physical surveillance, credential use, and ToS-violating automation.
+
+**Persona doctrine.** A non-attributable research persona (a "sock puppet") is permitted
+and is treated as good operational security: viewing from your own account leaks your
+identity to the target, and on several platforms notifies them. `AR_RESEARCH_PERSONA`
+therefore fires as an `elevated` ToS warning rather than a hard stop. Two things remain
+hard stops — impersonating a *real, identifiable* person (`AR_IMPERSONATE_REAL_PERSON`),
+and using any account, persona or not, to interact with the target (`AR_TARGET_CONTACT`).
+A persona buys you unattributed viewing of public material; it does not unlock private
+content, because reaching that still requires a follow request, which is interaction.
 
 **Trigger types**
 

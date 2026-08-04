@@ -8,12 +8,15 @@ description: "Actions that are prohibited or require special authorization"
 # via get_hard_stops() against the normalized `constraints` field.
 # Legacy lists below remain for backward compatibility during migration.
 rules:
+  # Scoped to impersonating a REAL, identifiable person. A non-attributable research
+  # persona ("sock puppet") is a different thing and is permitted for passive viewing --
+  # see AR_RESEARCH_PERSONA below and method_classes.yaml: passive_plus.
   - id: "HS_IMPERSONATION"
-    text: "Creating accounts impersonating others"
+    text: "Impersonating a real, identifiable person"
     triggers:
       - type: "contains_any"
         field: "constraints"
-        values: ["impersonate", "impersonation", "pretend to be", "sockpuppet", "alias account"]
+        values: ["impersonate", "impersonation", "pretend to be", "identity theft"]
 
   - id: "HS_BYPASS_ACCESS_CONTROLS"
     text: "Bypassing authentication or access controls"
@@ -59,16 +62,46 @@ rules:
 # severity: hard_stop | high | elevated
 # category: tos_risk | privacy_risk | legal_risk | operational_risk
 action_rules:
-  - id: "AR_FABRICATED_ACCOUNT"
-    text: "Creating a fabricated or impersonating account to view or reach a target"
+  # ---------------------------------------------------------------------------
+  # PERSONA DOCTRINE
+  #
+  # A non-attributable research persona (a "sock puppet") is PERMITTED, and is
+  # positively encouraged as operational security: viewing from your own account
+  # leaks your identity to the target and, on several platforms, notifies them.
+  #
+  # Two things remain hard stops, and they are what the rules below separate out:
+  #   1. Posing as a REAL, identifiable person. A persona invents an identity;
+  #      impersonation borrows someone else's. Only the second is prohibited.
+  #   2. Using ANY account -- persona or real -- to interact with the target.
+  #      That is AR_TARGET_CONTACT, which fires independently of account type.
+  #
+  # Note the boundary this preserves: a persona lets you view PUBLIC content
+  # without exposing yourself. It does not unlock private content, because that
+  # requires a follow request, which is interaction. See AR_RESTRICTED_CONTENT_ACCESS.
+  # ---------------------------------------------------------------------------
+  - id: "AR_IMPERSONATE_REAL_PERSON"
+    text: "Posing as a real, identifiable person -- distinct from a non-attributable research persona, which is permitted for passive viewing"
     severity: "hard_stop"
-    category: "privacy_risk"
+    category: "legal_risk"
     triggers:
       - type: "contains_any"
-        values: ["impersonate", "impersonation", "sock puppet", "sockpuppet",
-                 "catfish", "pose as", "pretend to be", "false identity",
-                 "fictitious identity", "burner account", "throwaway account",
-                 "alias account", "dummy account"]
+        values: ["impersonate", "impersonation", "catfish", "pose as",
+                 "pretend to be", "identity theft", "steal their identity",
+                 "clone their profile", "clone their account",
+                 "copy their profile", "using their name", "as their friend",
+                 "as their colleague", "as a recruiter"]
+      - type: "all_of"
+        values: ["pretend", "their"]
+
+  - id: "AR_RESEARCH_PERSONA"
+    text: "Research persona in use -- permitted, and good opsec for viewing. Keep it non-attributable, view only, and expect platform ToS to prohibit the account regardless"
+    severity: "elevated"
+    category: "tos_risk"
+    triggers:
+      - type: "contains_any"
+        values: ["sock puppet", "sockpuppet", "research persona", "research account",
+                 "burner account", "throwaway account", "alias account",
+                 "dummy account", "alt account", "non-attributable"]
       # all_of pairs so a qualifier between the words cannot defeat the match:
       # "fake Instagram account", "burner IG profile", "throwaway research persona".
       - type: "all_of"
@@ -78,23 +111,13 @@ action_rules:
       - type: "all_of"
         values: ["fake", "persona"]
       - type: "all_of"
-        values: ["fake", "page"]
-      - type: "all_of"
-        values: ["burner", "account"]
-      - type: "all_of"
         values: ["burner", "profile"]
       - type: "all_of"
         values: ["burner", "persona"]
       - type: "all_of"
-        values: ["throwaway", "account"]
-      - type: "all_of"
         values: ["throwaway", "profile"]
       - type: "all_of"
-        values: ["dummy", "account"]
-      - type: "all_of"
         values: ["dummy", "profile"]
-      - type: "all_of"
-        values: ["anonymous", "account"]
       - type: "all_of"
         values: ["second", "account"]
 
@@ -107,8 +130,16 @@ action_rules:
         values: ["social engineering", "pretext", "pretexting", "phish", "phishing",
                  "deceive", "under false pretenses", "elicitation", "cover story"]
 
+  # This rule is load-bearing for the persona doctrine above. Because a research
+  # persona is permitted for viewing, the line it must not cross is interaction --
+  # so this rule has to catch engagement, not just direct messaging. It fires on
+  # the action regardless of which account performs it.
+  #
+  # Story and profile views are included deliberately: on Instagram, Snapchat and
+  # LinkedIn a logged-in view is itself a notification to the target. "Passive"
+  # from the investigator's side is not always passive from theirs.
   - id: "AR_TARGET_CONTACT"
-    text: "Contacting or interacting with the target -- breaks passive-only scope and alerts them"
+    text: "Contacting or interacting with the target -- breaks passive-only scope and alerts them. Applies to research personas exactly as it does to a real account"
     severity: "hard_stop"
     category: "operational_risk"
     triggers:
@@ -116,9 +147,23 @@ action_rules:
         values: ["follow request", "friend request", "connection request",
                  "connect with", "message the", "dm the", "direct message",
                  "reach out to", "contact the target", "contact the subject",
-                 "contact the claimant", "interview the"]
+                 "contact the claimant", "interview the",
+                 # engagement -- visible to the target, and often notified
+                 "comment on", "reply to", "react to", "respond to",
+                 "like their", "like the target", "share their", "repost their",
+                 "tag them", "mention them", "endorse", "poke",
+                 "add them", "subscribe to their", "join their",
+                 # logged-in views that notify on major platforms
+                 "view their story", "watch their story", "view their stories",
+                 "story view", "view their profile", "engage with", "interact with"]
       - type: "all_of"
         values: ["send", "request"]
+      - type: "all_of"
+        values: ["send", "message"]
+      - type: "all_of"
+        values: ["follow", "target"]
+      - type: "all_of"
+        values: ["comment", "post"]
 
   - id: "AR_RESTRICTED_CONTENT_ACCESS"
     text: "Accessing non-public content the target has restricted"
@@ -188,7 +233,8 @@ action_rules:
 # NOTE: The legacy lists below are documentation/back-compat; only `rules:` and
 # `action_rules:` are deterministically evaluated.
 baseline_prohibited:
-  - "Creating impersonating accounts"
+  - "Creating accounts that impersonate a real, identifiable person"
+  - "Using any account, including a research persona, to interact with the target"
   - "Bypassing authentication or access controls"
   - "Unauthorized access to private systems or accounts"
   - "Social engineering or pretexting target individuals"
@@ -199,9 +245,13 @@ baseline_prohibited:
   - "DDoS or service disruption"
   - "Accessing or sharing CSAM or illegal content"
 
+# Note: "Logging into accounts" is prohibited under passive_only specifically.
+# Authenticated viewing via a non-attributable research persona is permitted, but it
+# belongs to the passive_plus method class, because logging in creates an account
+# footprint and some platforms notify the target on view.
 passive_only_prohibited:
   - "Sending messages or friend requests to targets"
-  - "Logging into accounts or services"
+  - "Logging into accounts or services (including a research persona -- that is passive_plus)"
   - "Submitting forms or queries that alert targets"
   - "Interacting with target's content (likes, comments, shares)"
   - "Running active network scans"
@@ -219,7 +269,8 @@ unauthorized_prohibited:
 tos_violations:
   - scraping: "Automated data collection often violates Terms of Service"
   - automation: "Bulk automated actions typically prohibited"
-  - impersonation_accounts: "Creating impersonation accounts violates most platforms' ToS"
+  - impersonation_accounts: "Creating accounts impersonating a real person violates most platforms' ToS and may be unlawful"
+  - research_personas: "Non-attributable research personas are permitted doctrine and good opsec, but most platforms prohibit them in their ToS regardless -- accept and record that risk rather than assuming it away"
   - api_abuse: "Exceeding rate limits or using APIs for prohibited purposes"
 
 privacy_violations:

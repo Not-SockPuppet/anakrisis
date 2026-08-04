@@ -40,6 +40,7 @@ method_classes:
     prohibited_if:
       - "Information is clearly marked as private or restricted"
       - "Access requires authentication or bypassing access controls"
+      - "Method requires logging into any account, including a research persona -- that is passive_plus, not passive_only"
 
   passive_plus:
     display_name: "Passive Plus"
@@ -51,20 +52,27 @@ method_classes:
       - "May involve systematic collection from multiple public sources."
       - "Still non-interactive but higher volume or scope than basic passive methods."
       - "Requires attention to cumulative privacy impact."
+      - "This is the correct class for authenticated viewing via a non-attributable research persona: it is still non-interactive, but logging in creates an account footprint, so it is not passive_only."
     examples:
       - "Systematic review of multiple public databases for correlation"
       - "Use of archived snapshots and historical public records"
       - "Cross-referencing publicly available datasets"
       - "Analysis of public business registries and professional directories"
+      - "Viewing public profiles and posts through a research persona rather than the investigator's own account"
     common_risks:
       - "Platform rate limiting or access restrictions due to volume"
       - "Aggregation may reveal sensitive patterns not apparent in individual records"
       - "Terms of service violations through systematic collection"
       - "Privacy concerns from mosaic effect of combined public data"
+      - "Most platforms prohibit secondary or pseudonymous accounts in their terms, so a research persona carries standing ToS exposure and risks suspension of the persona"
+      - "A logged-in view is itself a notification on some platforms -- profile views on LinkedIn, story views on Instagram and Snapchat -- so authenticated viewing is not silent by default"
     requires:
       - "Review of applicable platform terms of service"
       - "Assessment of proportionality and necessity"
       - "Documentation of legitimate purpose"
+      - "Research personas must be non-attributable inventions, never a real person's name, photo, or biography"
+      - "Research personas are view-only: no follows, requests, messages, comments, reactions, or story views"
+      - "Persona use is recorded in the case file, including which platforms and what was visible"
     prohibited_if:
       - "Investigation target is high-risk or protected class without authorization"
       - "Passive-only constraint is explicitly set"
@@ -100,7 +108,8 @@ method_classes:
       - "Passive-only constraint is set"
       - "No authorization has been obtained"
       - "Investigation involves protected individuals without proper legal basis"
-      - "Method would constitute harassment, impersonation, or deception"
+      - "Method would constitute harassment or impersonation of a real person"
+      - "Interaction would be performed from a research persona -- personas are view-only and must never be used to contact, engage with, or befriend the target"
 
   automation_bulk:
     display_name: "Automation and Bulk Collection"

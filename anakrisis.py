@@ -1120,11 +1120,21 @@ def get_safer_alternatives(proposed_action):
         alternatives.append("Use platforms with terms allowing research access")
         alternatives.append("Partner with academic or commercial providers")
 
-    if any(k in action_lower for k in ("fake", "impersonate", "pose as", "false identity",
-                                       "burner", "sock puppet", "sockpuppet", "pretext")):
-        alternatives.append("Treat restricted content as out of scope; collect only what is public without an account")
+    # Impersonating a real person, or pretexting, stays prohibited -- redirect to lawful routes.
+    if any(k in action_lower for k in ("impersonate", "pose as", "pretend to be", "catfish",
+                                       "false identity", "identity theft", "pretext")):
+        alternatives.append("Use a non-attributable research persona instead -- invent an identity rather than borrowing a real person's")
         alternatives.append("Request the material through discovery or a records request")
         alternatives.append("Build the record from dated public activity across independent sources")
+
+    # Research personas are permitted for viewing, so steer the *how*, not the whether.
+    if any(k in action_lower for k in ("sock puppet", "sockpuppet", "burner", "throwaway",
+                                       "research persona", "research account", "alt account",
+                                       "fake account", "fake profile", "dummy account")):
+        alternatives.append("Keep the persona non-attributable: no real person's name, photo, or biography, and nothing traceable to you")
+        alternatives.append("View only -- no follows, requests, messages, comments, reactions, or story views")
+        alternatives.append("Assume the platform's terms prohibit the account anyway; record that you accepted that risk and why")
+        alternatives.append("Remember a persona does not unlock private content -- reaching it still needs a follow request, which is interaction")
 
     if any(k in action_lower for k in ("follow request", "friend request", "connection request",
                                        "message", "contact", "reach out")):
