@@ -64,7 +64,7 @@ method_classes:
       - "Aggregation may reveal sensitive patterns not apparent in individual records"
       - "Terms of service violations through systematic collection"
       - "Privacy concerns from mosaic effect of combined public data"
-      - "Most platforms prohibit secondary or pseudonymous accounts in their terms, so a research persona carries standing ToS exposure and risks suspension of the persona"
+      - "Some platforms' terms don't allow secondary accounts, so a persona can be suspended -- worth keeping in mind, not a blocker"
       - "A logged-in view is itself a notification on some platforms -- profile views on LinkedIn, story views on Instagram and Snapchat -- so authenticated viewing is not silent by default"
     requires:
       - "Review of applicable platform terms of service"

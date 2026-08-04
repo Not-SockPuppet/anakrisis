@@ -94,7 +94,7 @@ action_rules:
         values: ["pretend", "their"]
 
   - id: "AR_RESEARCH_PERSONA"
-    text: "Research persona in use -- permitted, and good opsec for viewing. Keep it non-attributable, view only, and expect platform ToS to prohibit the account regardless"
+    text: "Heads up: some platforms' terms don't love secondary accounts -- just something to keep in mind. Persona use for viewing is fine; keep it non-attributable and view-only"
     severity: "elevated"
     category: "tos_risk"
     triggers:
@@ -270,7 +270,7 @@ tos_violations:
   - scraping: "Automated data collection often violates Terms of Service"
   - automation: "Bulk automated actions typically prohibited"
   - impersonation_accounts: "Creating accounts impersonating a real person violates most platforms' ToS and may be unlawful"
-  - research_personas: "Non-attributable research personas are permitted doctrine and good opsec, but most platforms prohibit them in their ToS regardless -- accept and record that risk rather than assuming it away"
+  - research_personas: "Research personas are permitted doctrine; just note some platforms' terms don't allow secondary accounts"
   - api_abuse: "Exceeding rate limits or using APIs for prohibited purposes"
 
 privacy_violations:

@@ -3,6 +3,7 @@
 The Anakrisis Protocol MCP Server - Ethics-aware OSINT decision and analysis system
 """
 import sys
+import os
 import logging
 from pathlib import Path
 import re
@@ -21,6 +22,156 @@ logger = logging.getLogger("anakrisis")
 
 # Initialize MCP server
 mcp = FastMCP("anakrisis")
+
+# ---------------------------------------------------------------------------
+# COLLECTION MODE -- can the host actually go and collect?
+#
+# Anakrisis plans collection, and it is useful to offer to *run* the next step
+# ("want me to search for that handle?"). Whether that offer makes sense depends
+# on what is driving the server: a cloud assistant usually has web search, a
+# local Ollama model usually has nothing but its own weights. Offering to search
+# when the model cannot is worse than not offering.
+#
+# MCP cannot answer this for us. The protocol negotiates client *capabilities*
+# (sampling, elicitation, roots, tasks) and carries a clientInfo name -- it does
+# not report which model is loaded, and a server is deliberately not allowed to
+# enumerate the host's own tools. So there is no reliable auto-detection, and
+# any claim otherwise would be guesswork dressed as a feature.
+#
+# What we do instead, in order of trust:
+#   1. ANAKRISIS_COLLECTION_MODE=cloud|local -- explicit, always wins. Set it in
+#      the same mcp config block that launches the server.
+#   2. clientInfo.name heuristic -- good for hosts that are unambiguous
+#      (Claude Desktop is cloud, LM Studio is local). Deliberately conservative:
+#      anything that can be pointed at either backend stays unknown.
+#   3. Unknown -> phrase the offer conditionally rather than assume. This is the
+#      default, and it degrades gracefully with no configuration at all.
+# ---------------------------------------------------------------------------
+COLLECTION_MODE_ENV = "ANAKRISIS_COLLECTION_MODE"
+
+# Hosts that ship with hosted models and web access. Substring match on clientInfo.name.
+_CLOUD_CLIENT_HINTS = (
+    "claude-ai", "claude desktop", "claude code", "claude",
+    "chatgpt", "openai", "gemini", "copilot", "perplexity",
+)
+# Hosts that are local-inference front ends by nature.
+_LOCAL_CLIENT_HINTS = (
+    "ollama", "lm studio", "lmstudio", "jan", "gpt4all",
+    "localai", "llamacpp", "llama.cpp", "text-generation-webui", "oobabooga",
+)
+# Hosts that can be pointed at either a cloud or a local backend. Never guessed;
+# these are exactly the users who should set the env var.
+_AMBIGUOUS_CLIENTS = ("continue", "cline", "roo", "zed", "cursor", "windsurf", "librechat", "open webui")
+
+
+def _client_name() -> str:
+    """clientInfo.name for the current request, lowercased. Empty if unavailable.
+
+    Read from the lowlevel contextvar rather than by threading a Context
+    parameter through all nine tools, which would change every signature for
+    one advisory string.
+    """
+    try:
+        from mcp.server.lowlevel.server import request_ctx
+        params = request_ctx.get().session.client_params
+        return str(getattr(getattr(params, "clientInfo", None), "name", "") or "").lower()
+    except Exception:
+        return ""
+
+
+def collection_mode() -> str:
+    """Return "cloud", "local", or "unknown". Never raises."""
+    override = str(os.environ.get(COLLECTION_MODE_ENV, "")).strip().lower()
+    if override in ("cloud", "local"):
+        return override
+    if override and override != "auto":
+        logger.warning("%s=%r is not cloud/local/auto; falling back to auto", COLLECTION_MODE_ENV, override)
+
+    name = _client_name()
+    if not name:
+        return "unknown"
+    if any(h in name for h in _AMBIGUOUS_CLIENTS):
+        return "unknown"
+    if any(h in name for h in _LOCAL_CLIENT_HINTS):
+        return "local"
+    if any(h in name for h in _CLOUD_CLIENT_HINTS):
+        return "cloud"
+    return "unknown"
+
+
+def render_collection_offer(suggestions) -> str:
+    """Offer to run the next collection step, phrased for what the host can do.
+
+    cloud   -- offer directly; the assistant can act on it.
+    local   -- no offer. Frame the same work as steps for the investigator, since
+               a local model has no web access and a prompt it cannot honour is
+               just noise.
+    unknown -- offer conditionally, so it reads correctly either way.
+    """
+    items = [str(s).strip() for s in (suggestions or []) if str(s).strip()]
+    if not items:
+        return ""
+
+    mode = collection_mode()
+    if mode == "local":
+        header = "Collection Steps (run these yourself)"
+        lead = "No web access assumed for this host, so these are for you to carry out:"
+    elif mode == "cloud":
+        header = "Collection I Can Run"
+        lead = "Say the word and I'll take these on:"
+    else:
+        header = "Suggested Collection"
+        lead = "If your assistant has web access it can run these; otherwise they are yours to do:"
+
+    return render_section(header, [lead] + items, max_items=8)
+
+
+# Artifact -> a concrete, passive, public-source collection step. Keyed on words
+# that show up in `what_you_have`. Everything here is first-pass and non-interactive
+# by design; nothing that touches the target belongs in an unprompted offer.
+_ARTIFACT_COLLECTION_HINTS = (
+    (("username", "handle", "screenname", "screen name", "nickname", "alias"),
+     "Run the username across platforms (Sherlock and Maigret cover the common ones) and note where it resolves"),
+    (("email", "e-mail", "email address"),
+     "Check the email against public breach-notification and reputation sources, and for linked public profiles"),
+    (("phone", "mobile", "cell number", "phone number"),
+     "Run the number through public reverse-lookup and carrier-identification sources"),
+    (("domain", "website", "url", "site"),
+     "Pull WHOIS, DNS records, and passive certificate transparency history for the domain"),
+    (("company", "business", "employer", "organisation", "organization"),
+     "Pull registry filings, listed officers, and public funding records for the company"),
+    (("photo", "image", "picture", "profile pic", "avatar"),
+     "Reverse-image search the photo across the major engines to find other places it appears"),
+    (("ip", "ip address", "server", "hostname", "infrastructure"),
+     "Check passive DNS and public internet-scan data for the address"),
+    (("name", "full name", "real name"),
+     "Search the name against public records, news archives, and professional directories"),
+)
+
+
+def suggest_collection(what_you_have: str, hard_stops=None):
+    """Passive collection steps implied by the artifacts already in hand.
+
+    Returns [] when a hard stop fired -- if the plan is blocked, the right next
+    move is re-scoping it, not collecting more.
+    """
+    if hard_stops:
+        return []
+    haystack = str(what_you_have or "").lower()
+    if not haystack.strip():
+        return []
+
+    # Word boundaries, not substrings: plain `"name" in haystack` fires on
+    # "username", and `"ip"` fires on half the dictionary.
+    seen, out = set(), []
+    for keys, suggestion in _ARTIFACT_COLLECTION_HINTS:
+        if suggestion in seen:
+            continue
+        if any(re.search(rf"\b{re.escape(k)}\b", haystack) for k in keys):
+            out.append(suggestion)
+            seen.add(suggestion)
+    return out
+
 
 # === CONFIGURATION ===
 BASE_DIR = Path(__file__).parent
@@ -1133,7 +1284,7 @@ def get_safer_alternatives(proposed_action):
                                        "fake account", "fake profile", "dummy account")):
         alternatives.append("Keep the persona non-attributable: no real person's name, photo, or biography, and nothing traceable to you")
         alternatives.append("View only -- no follows, requests, messages, comments, reactions, or story views")
-        alternatives.append("Assume the platform's terms prohibit the account anyway; record that you accepted that risk and why")
+        alternatives.append("Heads up: some platforms' terms don't allow secondary accounts -- just keep it in mind")
         alternatives.append("Remember a persona does not unlock private content -- reaching it still needs a follow request, which is interaction")
 
     if any(k in action_lower for k in ("follow request", "friend request", "connection request",
@@ -1191,6 +1342,10 @@ async def MissionBrief(
         
         # Get safe first steps
         safe_steps = get_safe_first_steps(investigation_types)
+
+        # Passive collection implied by the artifacts in hand, phrased for whatever
+        # is driving this session (see collection_mode()). Suppressed on a hard stop.
+        collection_suggestions = suggest_collection(what_you_have, hard_stops)
         
         # Determine required approvals / controls from doctrine
         risk_rules = load_risk_rules()
@@ -1275,6 +1430,7 @@ async def MissionBrief(
             "📋 INVESTIGATION PRE-FLIGHT ASSESSMENT",
             render_section("Key Findings", key_findings, max_items),
             render_section("Safe Next Steps", safe_steps, max_items),
+            render_collection_offer(collection_suggestions),
         ]
 
         if triggered:
