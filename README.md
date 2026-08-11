@@ -4,9 +4,21 @@
 
 Anakrisis is a [Model Context Protocol](https://modelcontextprotocol.io) server that brings structure, risk visibility, and documentation discipline to open-source intelligence work. It classifies investigations, scores risk against local YAML doctrine, flags prohibited actions, and scaffolds defensible case documentation — all before a single query leaves your machine.
 
-Anakrisis runs inside an AI agent, so agent-driven collection is absolutely on the table — web search, lookups, and live research are part of real investigative work, and Anakrisis is built to sit alongside them rather than pretend they don't happen. What it adds is everything *around* the collection: it plans the work, scores the risk before you act, flags hard stops, recommends the right tool for the artifact in front of you, and leaves you with a documented, defensible case afterwards.
+Anakrisis runs natively inside your local or cloud-based AI agent to govern, plan, and structure open-source intelligence collection securely.
 
-The Anakrisis tools themselves make no outbound network requests — they read local YAML doctrine and write to your disk. Collection is the agent's job; governing and structuring it is Anakrisis'.
+### 🤖 How It Works (Example Client Interaction)
+
+**User:**
+> "Go look up target email addresses using an un-attributed web persona."
+
+**Anakrisis Server via Agent:**
+
+```text
+⚠️  PHASE: Planning / Discovery
+📊  RISK LEVEL: MEDIUM (Authenticated viewing triggered)
+🚫  DISALLOWED_ACTIONS TRIPPED: Do not send messages, comments, or follow requests.
+👉  RECOMMENDED PLAYBOOK ACTION: Use static lookup tools from `assigntools.yaml`.
+```
 
 ---
 
@@ -20,21 +32,6 @@ The Anakrisis tools themselves make no outbound network requests — they read l
 | An investigation planning and documentation aid | A substitute for your own legal judgement |
 
 The advisory model is deliberate: Anakrisis surfaces warnings, hard stops, and safer alternatives, but it does not halt execution. **Operational decisions — and responsibility for them — remain with the investigator.**
-
-### On research personas
-
-Anakrisis permits non-attributable research personas — "sock puppets" — and treats them as good operational security rather than as a violation. Viewing a target from your own account leaks your identity to them, and on several platforms actively notifies them; a persona is how you avoid that.
-
-The line is drawn at *interaction*, not at the account:
-
-| Permitted, and encouraged | Hard stop |
-|---|---|
-| Creating a non-attributable persona to view public content | Posing as a real, identifiable person |
-| Viewing public profiles, posts, and pages while logged in as that persona | Any follow, request, message, comment, reaction, or story view directed at the target |
-
-Two consequences worth being explicit about. A persona buys you **unattributed viewing of public material** — it does not unlock private content, because reaching that requires a follow request, which is interaction. And a logged-in view is not automatically silent: LinkedIn profile views and Instagram or Snapchat story views notify the account holder, so "passive" from your side is not always passive from theirs. Authenticated persona viewing is classified `passive_plus`, not `passive_only`, for exactly that reason.
-
-One heads-up rather than a hurdle: some platforms' terms don't allow secondary accounts, so a persona can get suspended. Anakrisis mentions it in passing and moves on.
 
 ---
 
@@ -124,17 +121,31 @@ Then register Anakrisis with your client exactly as in the JSON above — the se
 
 For local models, prefer the larger instruct-tuned variants where your hardware allows. The nine tools return structured text that a model has to reason over, and very small models tend to summarise the guidance away rather than act on it.
 
-### Telling Anakrisis which one you're on
+### Clean Execution Hint
 
-Anakrisis offers to run collection steps for you — but only when that offer makes sense. A cloud assistant can search; a local model usually can't, and being offered a search it cannot perform is just noise.
-
-MCP has no way to report which model is running, so set it explicitly in the `env` block of your client config:
+To keep output logs completely free of irrelevant tool alerts, specify your model environment explicitly in your client config's environment block:
 
 ```json
-"env": { "ANAKRISIS_COLLECTION_MODE": "local" }
+"env": {
+  "ANAKRISIS_COLLECTION_MODE": "local"
+}
 ```
 
-Accepts `cloud`, `local`, or `auto` (the default). On `auto` the server makes a conservative guess from the client name and, when unsure, phrases collection as *"if your assistant has web access…"* — which reads correctly either way. Setting it explicitly just makes the output cleaner.
+Options: `cloud` | `local` | `auto` (default).
+
+---
+
+## On research personas
+
+Anakrisis natively manages non-attributable research personas ("sock puppets") by separating **passive viewing** from **active interaction**.
+
+| Action Type | Protocol Classification | System Action |
+| :--- | :--- | :--- |
+| **Passive Only** (Public profile/page viewing) | `passive_only` | ✅ Permitted & Encouraged |
+| **Passive Plus** (Logged-in profile/story views) | `passive_plus` | ⚠️ Warns investigator of trace notifications |
+| **Active Interaction** (Follow, DM, comment) | `hard_stop` | 🚫 Blocked by local doctrine rules |
+
+Full reasoning, edge cases, and the rules behind it: [docs/research_personas.md](docs/research_personas.md).
 
 ---
 
@@ -231,6 +242,10 @@ anakrisis/
 │   └── output_policy.yaml        # Output formatting / brevity policy
 ├── playbooks/              # Investigation-type playbooks (YAML)
 ├── report_templates/       # Report templates (Markdown)
+├── docs/
+│   ├── tools.md                  # Full per-tool reference
+│   ├── doctrine.md               # How each doctrine file is evaluated
+│   └── research_personas.md      # Persona doctrine, reasoning and edge cases
 ├── Dockerfile
 ├── .mcp.json               # Project-scoped MCP registration
 └── requirements.txt
