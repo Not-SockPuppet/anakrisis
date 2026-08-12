@@ -11,14 +11,52 @@ Anakrisis runs natively inside your local or cloud-based AI agent to govern, pla
 **User:**
 > "Go look up target email addresses using an un-attributed web persona."
 
-**Anakrisis Server via Agent:**
+**`MissionBrief` scores the plan before anything happens** *(abridged)*:
 
 ```text
-⚠️  PHASE: Planning / Discovery
-📊  RISK LEVEL: MEDIUM (Authenticated viewing triggered)
-🚫  DISALLOWED_ACTIONS TRIPPED: Do not send messages, comments, or follow requests.
-👉  RECOMMENDED PLAYBOOK ACTION: Use static lookup tools from `assigntools.yaml`.
+📋 INVESTIGATION PRE-FLIGHT ASSESSMENT
+
+## Key Findings
+- Classification: general_investigation
+- Risk tier: TIER_MEDIUM
+- Response mode: restricted
+- Triggered risk factors: 2
+
+## Collection I Can Run
+- Say the word and I'll take these on:
+- Run the username across platforms (Sherlock and Maigret cover the common ones)
+- Check the email against public breach-notification and reputation sources
+
+## Risk Factors
+- Total risk score: 6 (floor 0, cap 20)
+- No explicit authorization or consent stated (+4): The plan does not include a
+  documented authorization basis (or indicates lack of authorization).
+
+## Required Approvals
+- Supervisor approval
 ```
+
+**Then the persona tries to make contact — and `RulesOfEngagement` stops it:**
+
+```text
+🛑 ACTION PROHIBITED
+
+## Key Findings
+- Safety level: 🛑 PROHIBITED - HARD STOP
+- This action is disallowed by doctrine. Do not proceed. No authorization level
+  clears a hard stop.
+
+## Hard Stops
+- Contacting or interacting with the target -- breaks passive-only scope and
+  alerts them. Applies to research personas exactly as it does to a real account
+
+## Safer Alternatives
+- View only -- no follows, requests, messages, comments, reactions, or story views
+- Remember a persona does not unlock private content -- reaching it still needs a
+  follow request, which is interaction
+```
+
+The persona was never the problem. The verb was.
 
 ---
 

@@ -148,6 +148,13 @@ action_rules:
                  "connect with", "message the", "dm the", "direct message",
                  "reach out to", "contact the target", "contact the subject",
                  "contact the claimant", "interview the",
+                 # off-platform contact -- the social verbs below miss these entirely
+                 "email the target", "email the subject", "email them",
+                 "call the target", "call them", "cold call", "cold email",
+                 "text the target", "text them", "phone the target", "phone them",
+                 "write to the target", "write to them",
+                 "approach the target", "approach them",
+                 "speak to the target", "speak to them", "speak with the target",
                  # engagement -- visible to the target, and often notified
                  "comment on", "reply to", "react to", "respond to",
                  "like their", "like the target", "share their", "repost their",
@@ -164,6 +171,10 @@ action_rules:
         values: ["follow", "target"]
       - type: "all_of"
         values: ["comment", "post"]
+      - type: "all_of"
+        values: ["email", "target"]
+      - type: "all_of"
+        values: ["call", "target"]
 
   - id: "AR_RESTRICTED_CONTENT_ACCESS"
     text: "Accessing non-public content the target has restricted"
@@ -185,7 +196,11 @@ action_rules:
     category: "legal_risk"
     triggers:
       - type: "contains_any"
-        values: ["hack", "unauthorized access", "breach", "brute force",
+        # "breach the/their/into", not bare "breach" -- checking an address against
+        # public breach-notification data is routine passive OSINT, and AssignTools
+        # recommends it, so a bare match had the tool hard-stopping its own advice.
+        values: ["hack", "unauthorized access", "breach the", "breach their",
+                 "breach into", "brute force",
                  "credential stuffing", "exploit", "sql injection",
                  "bypass", "circumvent", "evade detection", "defeat the"]
 
