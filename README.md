@@ -81,6 +81,39 @@ The advisory model is deliberate: Anakrisis surfaces warnings, hard stops, and s
 
 ## Install
 
+### Container image (no clone required)
+
+Published images are available from the GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/not-sockpuppet/anakrisis:latest
+```
+
+Register it with an MCP client by having the client launch the container. Because
+MCP runs over stdio, `-i` is required:
+
+```json
+{
+  "mcpServers": {
+    "anakrisis": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-v", "${HOME}/anakrisis:/home/mcpuser/anakrisis",
+        "ghcr.io/not-sockpuppet/anakrisis:latest"
+      ],
+      "env": {}
+    }
+  }
+}
+```
+
+The volume mount persists case workspaces created by `CreateCase`; omit it if you
+do not need them to survive the container exiting.
+
+### From source
+
 **Requirements:** Python 3.10+
 
 Clone the repository and install its dependencies:
@@ -375,6 +408,3 @@ Anakrisis produces advisory guidance only. It does not validate the legality of 
 ## License
 
 [MIT](LICENSE)
-
-<!-- Ownership marker for the official MCP registry; must match the published package. -->
-mcp-name: io.github.Not-SockPuppet/anakrisis

@@ -9,6 +9,15 @@ updates:
       prefix: "ci"
     labels: ["dependencies"]
 
+  # Keep the Dockerfile base image current.
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "build"
+    labels: ["dependencies"]
+
   # Keep Python dependencies current. Grouped so routine bumps arrive as one PR.
   - package-ecosystem: "pip"
     directory: "/"
