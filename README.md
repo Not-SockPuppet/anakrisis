@@ -1,17 +1,27 @@
 # Anakrisis
 
-**Ethics-aware OSINT investigation planning and risk evaluation, delivered as an MCP server.**
+**Ethics-aware OSINT investigation planning, collection, and risk evaluation, delivered as an MCP server.**
 
 [![CI](https://github.com/Not-SockPuppet/anakrisis/actions/workflows/ci.yml/badge.svg)](https://github.com/Not-SockPuppet/anakrisis/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 Anakrisis is a [Model Context Protocol](https://modelcontextprotocol.io) server for
-open-source intelligence work. It classifies investigations, scores their risk against
-local YAML doctrine, flags prohibited actions, and scaffolds case documentation. It
-runs alongside a local or cloud AI agent, performs no collection itself, and makes no
-network calls: all decision logic is deterministic Python evaluating local
-configuration.
+open-source intelligence work. It plans investigations, classifies them, scores their
+risk against local YAML doctrine, flags prohibited actions, and scaffolds case
+documentation — and, driven by a cloud model, it goes and carries out the collection
+too, like any web-enabled AI agent.
+
+**Collection depends on which model drives it.** The server itself makes no network
+calls; its decision logic is deterministic Python over local configuration. The
+collection is performed by the model you connect:
+
+- **Cloud model** (Claude, Gemini, GPT, …) has internet access, so it can run the
+  searches and lookups Anakrisis recommends.
+- **Local model** (Ollama, LM Studio, …) runs entirely on your machine with no web
+  access, so it plans the collection and you carry it out.
+
+Both paths are covered step by step under [Install](#install).
 
 ### Example client interaction
 
@@ -41,28 +51,9 @@ addresses using an un-attributed web persona"`, `what_you_have="a username"`,
 - Supervisor approval
 ```
 
-If the persona then tries to make contact, `RulesOfEngagement` returns a hard stop:
-
-```text
-🛑 ACTION PROHIBITED
-
-## Key Findings
-- Safety level: 🛑 PROHIBITED - HARD STOP
-- This action is disallowed by doctrine. Do not proceed. No authorization level
-  clears a hard stop.
-
-## Hard Stops
-- Contacting or interacting with the target -- breaks passive-only scope and
-  alerts them. Applies to research personas exactly as it does to a real account
-
-## Safer Alternatives
-- Do not initiate contact; route any approach through counsel of record
-- Rely on content visible without interaction, and log the visibility state
-```
-
-The distinction is the action, not the account: a persona is permitted for passive
-viewing, while any interaction with the target is a hard stop regardless of which
-account performs it.
+`MissionBrief` is the planning entry point and one of nine tools. The full set —
+including `RulesOfEngagement`, which flags hard stops before a risky action, and the
+analysis and reporting tools — is listed under [Tools](#tools).
 
 ---
 
@@ -71,7 +62,7 @@ account performs it.
 | Anakrisis IS | Anakrisis is NOT |
 |---|---|
 | A governance layer for agent-driven collection | A verification or attribution service |
-| A risk classification engine (LOW / MEDIUM / HIGH) | A bypass, evasion, or anonymity tool |
+| A risk classification engine (LOW → CRITICAL) | A bypass, evasion, or anonymity tool |
 | A policy and doctrine interpretation layer | A scraper or automation framework in its own right |
 | An investigation planning and documentation aid | A substitute for your own legal judgement |
 
@@ -81,42 +72,110 @@ The advisory model is deliberate: Anakrisis surfaces warnings, hard stops, and s
 
 ## Install
 
-### Container image (no clone required)
+The server is the same for everyone; what changes is the model you connect it to.
+Pick the path that matches how you want to run it. Each takes about five minutes.
 
-Published images are available from the GitHub Container Registry:
+- **Path A — cloud model.** A hosted assistant (Claude, Gemini, GPT, …) drives the
+  server. It has web access, so it carries out collection for you.
+- **Path B — local model.** A model on your own machine (Ollama, LM Studio, …) drives
+  the server. Nothing leaves your computer, but there is no web access, so you run the
+  collection yourself.
+
+### Prerequisites (both paths)
+
+1. **Docker**, installed and running — [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+   on macOS/Windows, or the Docker daemon on Linux.
+2. An **MCP-capable client**: a cloud one (Claude Desktop, Claude Code, …) for Path A,
+   or a local one (LM Studio, or any client that fronts Ollama) for Path B.
+
+Pull the image once:
 
 ```bash
 docker pull ghcr.io/not-sockpuppet/anakrisis:latest
 ```
 
-Register it with an MCP client by having the client launch the container. Because
-MCP runs over stdio, `-i` is required:
+### Path A — cloud model (recommended; collects for you)
 
-```json
-{
-  "mcpServers": {
-    "anakrisis": {
-      "type": "stdio",
-      "command": "docker",
-      "args": [
-        "run", "-i", "--rm",
-        "-v", "${HOME}/anakrisis:/home/mcpuser/anakrisis",
-        "ghcr.io/not-sockpuppet/anakrisis:latest"
-      ],
-      "env": {}
-    }
-  }
-}
-```
+1. Open your client's MCP configuration. In Claude Desktop this is
+   **Settings → Developer → Edit Config**; other clients have an equivalent JSON file.
+2. Add Anakrisis, with the collection mode set to `cloud`:
 
-The volume mount persists case workspaces created by `CreateCase`; omit it if you
-do not need them to survive the container exiting.
+   ```json
+   {
+     "mcpServers": {
+       "anakrisis": {
+         "command": "docker",
+         "args": [
+           "run", "-i", "--rm",
+           "-v", "${HOME}/anakrisis:/home/mcpuser/anakrisis",
+           "ghcr.io/not-sockpuppet/anakrisis:latest"
+         ],
+         "env": { "ANAKRISIS_COLLECTION_MODE": "cloud" }
+       }
+     }
+   }
+   ```
 
-### From source
+3. Save the file and restart the client. The nine tools appear.
+4. Ask it to plan an investigation. Because the model has web access, when Anakrisis
+   recommends collection steps the assistant will offer to run them.
+
+### Path B — local model (private; you collect)
+
+1. If you use Ollama, pull a model first. Prefer a larger instruct-tuned one — small
+   models tend to summarise the guidance away rather than act on it:
+
+   ```bash
+   ollama pull llama3.1
+   ```
+
+2. Open your local MCP client's configuration and add Anakrisis, with the collection
+   mode set to `local`:
+
+   ```json
+   {
+     "mcpServers": {
+       "anakrisis": {
+         "command": "docker",
+         "args": [
+           "run", "-i", "--rm",
+           "-v", "${HOME}/anakrisis:/home/mcpuser/anakrisis",
+           "ghcr.io/not-sockpuppet/anakrisis:latest"
+         ],
+         "env": { "ANAKRISIS_COLLECTION_MODE": "local" }
+       }
+     }
+   }
+   ```
+
+3. Save the file and restart the client. The nine tools appear. Anakrisis presents
+   collection as steps for you to carry out, since a local model has no web access.
+
+### Notes on the configuration
+
+- The `-v` volume mount persists case workspaces created by `CreateCase` under
+  `~/anakrisis` on your machine. Omit it if you don't need cases to survive the
+  container exiting.
+- `ANAKRISIS_COLLECTION_MODE` accepts `cloud`, `local`, or `auto` (the default, which
+  guesses from the client name). Setting it explicitly keeps the collection offers
+  correct and the logs clean.
+- The doctrine, risk scoring, and hard stops are identical on both paths — they are
+  deterministic Python and YAML, so a weaker local model gets the same guardrails,
+  only weaker analysis.
+
+### Cloud vs local at a glance
+
+| | Cloud model | Local model |
+|---|---|---|
+| **Collection** | The assistant runs it for you (has web access) | You run it yourself (no web access) |
+| **Reasoning** | Stronger classification, analysis, and pivots | Weaker, more so on smaller models |
+| **Speed** | Fast, no local hardware needed | Depends on your machine |
+| **Privacy** | Case context goes to a provider's API | **Nothing leaves your machine** |
+
+<details>
+<summary>Run from source instead of Docker</summary>
 
 **Requirements:** Python 3.10+
-
-Clone the repository and install its dependencies:
 
 ```bash
 git clone https://github.com/Not-SockPuppet/anakrisis.git
@@ -124,119 +183,27 @@ cd anakrisis
 pip install -r requirements.txt
 ```
 
-Alternatively, install it as a package. This pulls the dependencies and adds an
-`anakrisis-server` command on your `PATH`:
-
-```bash
-pip install .
-```
-
-### Register with an MCP client
-
-The repository ships a project-scoped `.mcp.json`, so clients that support project
-configuration (such as Claude Code) pick the server up when launched from the repo
-root. Because that config uses a relative path, it only works from the repository
-directory.
-
-For other clients, or a global registration, point the client at the server with an
-absolute path:
+Then point your client at the server with an absolute path (set
+`ANAKRISIS_COLLECTION_MODE` to `cloud` or `local` in `env` as above):
 
 ```json
 {
   "mcpServers": {
     "anakrisis": {
-      "type": "stdio",
       "command": "python3",
       "args": ["/path/to/anakrisis/anakrisis.py"],
-      "env": {}
+      "env": { "ANAKRISIS_COLLECTION_MODE": "cloud" }
     }
   }
 }
 ```
 
-If you installed the package with `pip install .`, use the console script instead of
-a file path:
-
-```json
-{
-  "mcpServers": {
-    "anakrisis": {
-      "type": "stdio",
-      "command": "anakrisis-server",
-      "env": {}
-    }
-  }
-}
-```
-
-Restart the client and the nine tools appear.
-
-<details>
-<summary>Running it directly, and Docker</summary>
-
-```bash
-python3 anakrisis.py
-```
-
-The server speaks MCP over stdio and waits for a client — running it standalone is only useful to confirm it starts cleanly (missing doctrine files are logged as warnings and fall back to built-in defaults).
-
-```bash
-docker build -t anakrisis .
-docker run -i --rm anakrisis
-```
-
-The image bundles the server, doctrine, playbooks, and report templates, and runs as a non-root user. Because MCP runs over stdio, keep `-i` in the run command (or configure your MCP client / gateway to launch the container). To persist case workspaces created by `CreateCase`, mount a volume over the container user's home:
-
-```bash
-docker run -i --rm -v ~/anakrisis:/home/mcpuser/anakrisis anakrisis
-```
+Installing as a package (`pip install .`) adds an `anakrisis-server` command you can
+use in place of `python3 /path/to/anakrisis.py`. The repository also ships a
+project-scoped `.mcp.json`, so clients that support project configuration (such as
+Claude Code) pick the server up when launched from the repo root.
 
 </details>
-
----
-
-## Choose your model: cloud or local
-
-Anakrisis is just an MCP server. It works with **any** MCP-capable assistant, and the choice of what drives it is genuinely yours — it changes the character of the tool rather than whether it functions.
-
-| | Cloud — Claude, Gemini, GPT, any MCP-capable model | Local — Ollama, LM Studio, llama.cpp |
-|---|---|---|
-| **Reasoning** | Stronger. Better classification, sharper analysis, more useful pivots | Weaker, and more so on smaller models |
-| **Speed** | Fast, no local hardware needed | Depends entirely on your machine |
-| **Web access** | Usually built in — it can go and collect for you | None. You run the collection yourself |
-| **Privacy** | Your case context goes to a provider's API | **Nothing leaves your machine** |
-
-**The trade is privacy against reasoning and speed.** The right choice depends on the case: a public-record company check and an investigation involving a vulnerable person have different requirements.
-
-Worth knowing either way: the doctrine, risk scoring, and hard stops are deterministic Python and YAML. They behave identically no matter what model you attach — a weaker local model doesn't get weaker guardrails, only weaker analysis.
-
-### Cloud setup
-
-Use the JSON above with any MCP-capable client — Claude Desktop, Claude Code, or anything else that speaks MCP.
-
-### Local setup
-
-Any MCP-capable local client works. With [Ollama](https://ollama.com) behind a client that supports MCP:
-
-```bash
-ollama pull llama3.1
-```
-
-Then register Anakrisis with your client exactly as in the JSON above — the server doesn't care what's on the other end.
-
-For local models, prefer the larger instruct-tuned variants where your hardware allows. The nine tools return structured text that a model has to reason over, and very small models tend to summarise the guidance away rather than act on it.
-
-### Clean Execution Hint
-
-To keep output logs completely free of irrelevant tool alerts, specify your model environment explicitly in your client config's environment block:
-
-```json
-"env": {
-  "ANAKRISIS_COLLECTION_MODE": "local"
-}
-```
-
-Options: `cloud` | `local` | `auto` (default).
 
 ---
 
