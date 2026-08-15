@@ -1,62 +1,76 @@
 name: Release
 
-# Publishes to PyPI when a version tag is pushed (e.g. v0.1.0).
+# Builds and publishes the container image to the GitHub Container Registry
+# (ghcr.io) when a version tag is pushed (e.g. v0.1.0).
 #
-# Authentication uses PyPI Trusted Publishing (OIDC): PyPI is configured to
-# trust this repository and workflow, so no API token is stored in the repo.
-# See https://docs.pypi.org/trusted-publishers/
+# Authentication uses the automatic GITHUB_TOKEN, so no secrets need to be
+# configured. The published image is public once the package visibility is set
+# to public in the repository's package settings (one-time, after first push).
 
 on:
   push:
     tags:
       - "v*"
+  # Allows a manual run from the Actions tab for testing.
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build distributions
+  image:
+    name: Build and publish container image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v7
+      # Enables building the arm64 image (Apple Silicon) on an amd64 runner.
+      - uses: docker/setup-qemu-action@v4
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v4
         with:
-          python-version: "3.12"
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build sdist and wheel
-        run: |
-          python -m pip install --upgrade pip build
-          python -m build
-
-      - name: Check metadata
-        run: |
-          python -m pip install --upgrade twine
-          twine check dist/*
-
-      - uses: actions/upload-artifact@v7
+      - name: Derive image tags
+        id: meta
+        uses: docker/metadata-action@v6
         with:
-          name: dist
-          path: dist/
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=anakrisis
+            org.opencontainers.image.description=Ethics-aware OSINT investigation planning and risk evaluation, delivered as an MCP server.
+            org.opencontainers.image.licenses=MIT
 
-  publish:
-    name: Publish to PyPI
-    needs: build
-    runs-on: ubuntu-latest
-    # The environment gates the release; PyPI's trusted publisher config
-    # references this environment name.
-    environment:
-      name: pypi
-      url: https://pypi.org/p/anakrisis
-    permissions:
-      # Required for OIDC trusted publishing.
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@v8
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v7
         with:
-          name: dist
-          path: dist/
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Publish
-        uses: pypa/gh-action-pypi-publish@release/v1
+      # Records a signed provenance attestation for the published image.
+      - name: Attest provenance
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
