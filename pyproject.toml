@@ -1,0 +1,84 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "anakrisis"
+version = "0.1.0"
+description = "Ethics-aware OSINT investigation planning and risk evaluation, delivered as an MCP server."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Not-SockPuppet" }]
+keywords = ["mcp", "mcp-server", "osint", "risk-assessment", "investigation", "security-tools"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+]
+dependencies = [
+    # Capped below 2.0: mcp 2.x relocated mcp.server.fastmcp, which this server imports.
+    "mcp[cli]>=1.2.0,<2",
+    "pyyaml>=6.0.1",
+]
+
+[project.optional-dependencies]
+launcher = ["rich>=13.0"]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[project.urls]
+Homepage = "https://github.com/Not-SockPuppet/anakrisis"
+Repository = "https://github.com/Not-SockPuppet/anakrisis"
+Issues = "https://github.com/Not-SockPuppet/anakrisis/issues"
+
+[project.scripts]
+anakrisis-server = "anakrisis:main"
+
+# Flat single-module layout: the server is anakrisis.py at the repo root, and the
+# doctrine/playbook/template data it reads at runtime is shipped alongside it.
+[tool.hatch.build.targets.wheel]
+include = [
+    "anakrisis.py",
+    "doctrine/**",
+    "playbooks/**",
+    "report_templates/**",
+]
+
+[tool.hatch.build.targets.wheel.force-include]
+"doctrine" = "doctrine"
+"playbooks" = "playbooks"
+"report_templates" = "report_templates"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "anakrisis.py",
+    "anakrisis",
+    "doctrine/**",
+    "playbooks/**",
+    "report_templates/**",
+    "docs/**",
+    "tests/**",
+    "Dockerfile",
+    ".mcp.json",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+# E501: long lines are mostly doctrine strings and prompt text kept readable inline.
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -38,7 +38,7 @@ primary entry point at the start of an investigation.
 
 ### What it produces
 
-An "Investigation Pre-Flight Assessment" containing:
+An "Investigation Planning Assessment" containing:
 
 - **Key Findings** — the investigation classification (keyword-based:
   `background_check`, `threat_assessment`, `fraud_investigation`, `person_location`,
