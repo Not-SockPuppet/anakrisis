@@ -32,20 +32,24 @@ schema, evaluated in `anakrisis.py`:
 
 | Trigger type | Matches when |
 |---|---|
-| `contains_any` | any of `values` appears as a substring of the field |
+| `contains_any` | any of `values` appears in the field as a whole word or phrase |
 | `equals_any` | the field exactly equals one of `values` |
-| `not_contains_any` | none of `values` appears in the field (optionally gated with `evaluate_if_field_non_empty: true`) |
+| `not_contains_any` | none of `values` appears in the field as a whole word/phrase (optionally gated with `evaluate_if_field_non_empty: true`) |
 | `missing_any` | any of the listed `fields` is empty after normalization (or, for enum fields, equals `unknown`) |
-| `all_of` | every token in `values` appears somewhere in the field, in any order (`action_rules` only) |
+| `all_of` | every token in `values` appears somewhere in the field as a whole word, in any order (`action_rules` only) |
 
 All matching runs against normalized text: trimmed, lowercased, with internal
-whitespace collapsed. Write trigger `values` as lowercase phrases; multi-word phrases
-match as substrings of the normalized input.
+whitespace collapsed. Write trigger `values` as lowercase words or phrases.
 
-Because `contains_any` is literal, a multi-word phrase fails as soon as a qualifier
-appears between its words. Use `all_of` for multi-word concepts that need to survive
-that: `["fake", "account"]` matches "fake Instagram account", "fake burner account",
-and "fake IG page", none of which contain the literal string "fake account".
+Matching is at word boundaries, not substrings: `contact` fires on "contact them" but
+not on "contacts", and `send` does not fire on "resend". List inflected forms
+explicitly when both should match — for example `scrape` and `scraping`.
+
+Because `contains_any` matches each value as a contiguous phrase, a multi-word phrase
+fails as soon as a qualifier appears between its words. Use `all_of` for multi-word
+concepts that need to survive that: `["fake", "account"]` matches "fake Instagram
+account", "fake burner account", and "fake IG page", none of which contain the phrase
+"fake account".
 
 ## Quiet-by-default presentation
 
@@ -67,8 +71,8 @@ Three consequences matter when authoring doctrine:
    in `disallowed_actions.yaml`. The legacy static lists in that file are a fallback
    used only when no `rules:` are defined, which prevents the full prohibition list
    from being dumped on every call.
-3. **Quiet is not the same as clear.** Suppressing boilerplate must never read as
-   approval. `RulesOfEngagement` states explicitly that a no-match result is
+3. **A quiet result is not a clearance.** Suppressing warning sections must not read
+   as approval. `RulesOfEngagement` states explicitly that a no-match result is
    unassessed rather than cleared, because the ruleset is finite and an unrecognized
    action has not been evaluated. Preserve that distinction in any tool you add: an
    empty warning set is an absence of evidence, not a clean bill of health.
@@ -111,8 +115,8 @@ stacked signals.
 - When adding a factor, decide whether it is substantive (any non-`missing_any`
   trigger) or context-only (`missing_any` only) — this determines whether it can
   surface warning sections by itself.
-- After any edit, walk the `test_cases` entries by hand or with a small script and
-  confirm the expected factor ids, scores, and tiers still hold.
+- After any edit, run `pytest tests/test_doctrine_fixtures.py` to confirm the
+  expected factor ids, scores, and tiers in the `test_cases` block still hold.
 
 ## doctrine/disallowed_actions.yaml
 
@@ -147,10 +151,10 @@ content, because reaching that still requires a follow request, which is interac
 
 | Type | Behavior |
 |---|---|
-| `contains_any` | Matches if any listed phrase appears as a substring |
-| `all_of` | Matches if every listed token appears anywhere, in any order |
+| `contains_any` | Matches if any listed phrase appears as a whole word/phrase |
+| `all_of` | Matches if every listed token appears anywhere as a whole word, in any order |
 
-Use `all_of` for multi-word concepts. Literal phrase matching breaks the moment a
+Use `all_of` for multi-word concepts. Contiguous phrase matching breaks the moment a
 qualifier lands between the words — `"fake account"` does not match "fake Instagram
 account", while `["fake", "account"]` does.
 
@@ -175,7 +179,7 @@ account", while `["fake", "account"]` does.
   than `"pretexting"` alone.
 - A `RulesOfEngagement` call that matches nothing is reported as unassessed, not
   cleared. Widening coverage is still worthwhile, but a gap in the ruleset does not
-  produce a false green light.
+  amount to approval of the action.
 
 ## doctrine/actor_profiles.yaml
 
@@ -418,7 +422,8 @@ constraints, methodology, findings, and supporting sections.
 4. **Mind the quiet-by-default gate.** Ask, for every new rule: should this render
    warnings on its own? Substantive triggers do; `missing_any` triggers do not.
 5. **Validate with the test cases.** `risk_rules.yaml` ships expected outcomes for
-   ten scenarios — keep them passing, and add cases alongside new factors.
+   ten scenarios, run by `tests/test_doctrine_fixtures.py`. Keep them passing
+   (`pytest -q`), and add cases alongside new factors.
 6. **Advisory means advisory.** No doctrine edit turns Anakrisis into an enforcement
    layer. Warnings surface exposure; responsibility for actions taken remains with
    the investigator.
