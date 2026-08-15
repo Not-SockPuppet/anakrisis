@@ -1,0 +1,38 @@
+# Keep the build context minimal and free of local material.
+# The Dockerfile copies only what it needs, but the whole context is still sent
+# to the daemon -- and investigation material must never be near a build.
+
+# Local-only data
+cases/
+Backup/
+
+# Version control and CI
+.git/
+.github/
+.gitignore
+
+# Python build/test artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+tests/
+
+# Editor / tooling / OS
+.idea/
+.vscode/
+.obsidian/
+.claude/
+CLAUDE.md
+.DS_Store
+Thumbs.db
+
+# Docs not needed at runtime
+docs/
+*.md
+!README.md
