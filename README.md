@@ -74,23 +74,28 @@ The advisory model is deliberate: Anakrisis surfaces warnings, hard stops, and s
 
 ## Install
 
-Anakrisis works with **any MCP-compatible client** — the Claude desktop and web apps,
-Claude Code, Cursor, LM Studio, or anything else that speaks MCP. You do not need
-Claude Code, and you do not need to write any code.
+### What you need
 
-There are two steps: install Docker, then paste one config block into your client.
+| | What | Why |
+|---|---|---|
+| 1 | **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** (macOS/Windows) or Docker Engine (Linux) | Runs the server in a self-contained box. You do **not** need Python or any other dependency. |
+| 2 | **An MCP-compatible AI client**, such as the Claude desktop app, Claude Code, Cursor, Windsurf, or LM Studio | This is the assistant that talks to Anakrisis. Any client that speaks MCP works. |
+
+That is the whole list. You do not need to download Anakrisis itself — the image is
+fetched automatically the first time your client starts the server — and you do not
+need to write any code. Claude Code is not required; the regular Claude desktop app
+works, as do Cursor, LM Studio, and others.
+
+Then there are two steps: install Docker, and paste one config block into your client.
 
 ### Step 1 — Install Docker
 
-Docker runs the server in a self-contained box, so you do not need Python or any
-other dependency on your machine.
-
 1. Download [Docker Desktop](https://www.docker.com/products/docker-desktop/) (macOS,
    Windows) or install the Docker Engine on Linux.
-2. Install it like any other application, then **launch it** and leave it running.
+2. Install it like any other application, then **launch it** and leave it running in
+   the background.
 
-That is the only software you need. You do not have to download Anakrisis itself —
-the image is fetched automatically the first time your client starts the server.
+Docker must be running whenever you use Anakrisis, since it is what starts the server.
 
 ### Step 2 — Add Anakrisis to your client
 
