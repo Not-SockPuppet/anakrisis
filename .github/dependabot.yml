@@ -30,3 +30,8 @@ updates:
       python-dependencies:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+    ignore:
+      # mcp 2.x relocated mcp.server.fastmcp, which this server imports, so a
+      # major bump breaks startup. Remove this rule when migrating to mcp 2.x.
+      - dependency-name: "mcp"
+        update-types: ["version-update:semver-major"]
