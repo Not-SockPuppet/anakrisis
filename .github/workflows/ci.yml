@@ -35,3 +35,37 @@ jobs:
 
       - name: Test (pytest)
         run: pytest -q
+
+  docker:
+    name: Build image and check it starts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: anakrisis:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # The unit tests run against the host Python, so they say nothing about
+      # whether the image itself works. Drive the container over stdio the way
+      # a real MCP client would and require a valid initialize result.
+      - name: Smoke test the container over stdio
+        run: |
+          request='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1.0"}}}'
+          response=$(printf '%s\n' "$request" | docker run -i --rm anakrisis:ci 2>/dev/null)
+          echo "$response"
+          echo "$response" | grep -q '"serverInfo"' \
+            || { echo "::error::Container did not return a valid MCP initialize result"; exit 1; }
+
+      - name: Check the image runs as a non-root user
+        run: |
+          user=$(docker run --rm --entrypoint id anakrisis:ci -un)
+          echo "container user: $user"
+          [ "$user" != "root" ] || { echo "::error::Image runs as root"; exit 1; }
