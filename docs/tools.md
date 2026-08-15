@@ -5,6 +5,10 @@ structure, and recommend, but none of them collects data, executes actions, or b
 execution. Every tool returns plain text (Markdown-formatted) and validates its own
 required parameters, returning a short error message when a required field is missing.
 
+Collection itself is carried out by the model driving the server, not by the tools: a
+cloud model has web access and runs the searches and lookups these tools recommend,
+while a local model has none and leaves the collection to you.
+
 All string parameters default to an empty string unless noted otherwise. Presentation
 (bullet caps, section ordering, grouping) is governed by `doctrine/output_policy.yaml`;
 see [doctrine.md](doctrine.md) for details.
