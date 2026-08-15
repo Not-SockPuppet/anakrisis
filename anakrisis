@@ -108,17 +108,12 @@ def banner() -> None:
     console.print(Text(ascii_logo, style=ORANGE))
 
     headline = Text()
-    headline.append("ANAKRISIS MISSION CONTROL", style="bold")
-    headline.append(" | The Anakrisis Protocol", style=MUTED)
+    headline.append("Anakrisis", style="bold")
+    headline.append(" | OSINT planning and risk evaluation MCP server", style=MUTED)
     console.print(headline)
 
     tagline = Text()
-    sep = Text(" × ", style=MUTED)
-    tagline.append("Evidence Stays Local", style=MUTED)
-    tagline.append_text(sep)
-    tagline.append("Open-Source Intelligence", style=MUTED)
-    tagline.append_text(sep)
-    tagline.append("Investigation", style=MUTED)
+    tagline.append("Local-only. No network calls. Advisory, not enforcing.", style=MUTED)
     console.print(tagline)
 
     console.print(Rule(style=MUTED))
@@ -244,9 +239,9 @@ def main() -> None:
     print_cases_section()
     console.print()
 
-    console.print(Text("Starting The Anakrisis Protocol...", style="bold"))
+    console.print(Text("Starting Anakrisis...", style="bold"))
     console.print(Text("Interact in plain language — no special commands required.", style=MUTED))
-    console.print(Text('Example: "Plan an ethical OSINT investigation."', style=MUTED))
+    console.print(Text('Example: "Plan an OSINT investigation into a vendor company."', style=MUTED))
     console.print()
 
     # Launch the MCP client CLI from the project root

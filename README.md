@@ -1,20 +1,28 @@
-# The Anakrisis Protocol
+# Anakrisis
 
 **Ethics-aware OSINT investigation planning and risk evaluation, delivered as an MCP server.**
 
-Anakrisis is a [Model Context Protocol](https://modelcontextprotocol.io) server that brings structure, risk visibility, and documentation discipline to open-source intelligence work. It classifies investigations, scores risk against local YAML doctrine, flags prohibited actions, and scaffolds defensible case documentation — all before a single query leaves your machine.
+[![CI](https://github.com/Not-SockPuppet/anakrisis/actions/workflows/ci.yml/badge.svg)](https://github.com/Not-SockPuppet/anakrisis/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-Anakrisis runs natively inside your local or cloud-based AI agent to govern, plan, and structure open-source intelligence collection securely.
+Anakrisis is a [Model Context Protocol](https://modelcontextprotocol.io) server for
+open-source intelligence work. It classifies investigations, scores their risk against
+local YAML doctrine, flags prohibited actions, and scaffolds case documentation. It
+runs alongside a local or cloud AI agent, performs no collection itself, and makes no
+network calls: all decision logic is deterministic Python evaluating local
+configuration.
 
-### 🤖 How It Works (Example Client Interaction)
+### Example client interaction
 
-**User:**
-> "Go look up target email addresses using an un-attributed web persona."
-
-**`MissionBrief` scores the plan before anything happens** *(abridged)*:
+A user asks the assistant to look up a target's email addresses using an
+un-attributed web persona. The assistant calls `MissionBrief` with the goal, the
+starting artifact, and the stated constraint (`goal="Look up the target's email
+addresses using an un-attributed web persona"`, `what_you_have="a username"`,
+`constraints="passive only"`):
 
 ```text
-📋 INVESTIGATION PRE-FLIGHT ASSESSMENT
+📋 INVESTIGATION PLANNING ASSESSMENT
 
 ## Key Findings
 - Classification: general_investigation
@@ -22,13 +30,10 @@ Anakrisis runs natively inside your local or cloud-based AI agent to govern, pla
 - Response mode: restricted
 - Triggered risk factors: 2
 
-## Collection I Can Run
-- Say the word and I'll take these on:
-- Run the username across platforms (Sherlock and Maigret cover the common ones)
-- Check the email against public breach-notification and reputation sources
-
 ## Risk Factors
 - Total risk score: 6 (floor 0, cap 20)
+- Insufficient planning context (+2): Key planning inputs are missing, reducing
+  reliable risk assessment.
 - No explicit authorization or consent stated (+4): The plan does not include a
   documented authorization basis (or indicates lack of authorization).
 
@@ -36,7 +41,7 @@ Anakrisis runs natively inside your local or cloud-based AI agent to govern, pla
 - Supervisor approval
 ```
 
-**Then the persona tries to make contact — and `RulesOfEngagement` stops it:**
+If the persona then tries to make contact, `RulesOfEngagement` returns a hard stop:
 
 ```text
 🛑 ACTION PROHIBITED
@@ -51,12 +56,13 @@ Anakrisis runs natively inside your local or cloud-based AI agent to govern, pla
   alerts them. Applies to research personas exactly as it does to a real account
 
 ## Safer Alternatives
-- View only -- no follows, requests, messages, comments, reactions, or story views
-- Remember a persona does not unlock private content -- reaching it still needs a
-  follow request, which is interaction
+- Do not initiate contact; route any approach through counsel of record
+- Rely on content visible without interaction, and log the visibility state
 ```
 
-The persona was never the problem. The verb was.
+The distinction is the action, not the account: a persona is permitted for passive
+viewing, while any interaction with the target is a hard stop regardless of which
+account performs it.
 
 ---
 
@@ -77,17 +83,30 @@ The advisory model is deliberate: Anakrisis surfaces warnings, hard stops, and s
 
 **Requirements:** Python 3.10+
 
+Clone the repository and install its dependencies:
+
 ```bash
 git clone https://github.com/Not-SockPuppet/anakrisis.git
 cd anakrisis
 pip install -r requirements.txt
 ```
 
+Alternatively, install it as a package. This pulls the dependencies and adds an
+`anakrisis-server` command on your `PATH`:
+
+```bash
+pip install .
+```
+
 ### Register with an MCP client
 
-The repository ships a project-scoped `.mcp.json`, so clients that support project configuration (such as Claude Code) pick the server up automatically when launched from the repo root.
+The repository ships a project-scoped `.mcp.json`, so clients that support project
+configuration (such as Claude Code) pick the server up when launched from the repo
+root. Because that config uses a relative path, it only works from the repository
+directory.
 
-For other clients, or a global registration, point the client at the server with an absolute path:
+For other clients, or a global registration, point the client at the server with an
+absolute path:
 
 ```json
 {
@@ -102,7 +121,22 @@ For other clients, or a global registration, point the client at the server with
 }
 ```
 
-That's it — restart your client and the nine tools appear.
+If you installed the package with `pip install .`, use the console script instead of
+a file path:
+
+```json
+{
+  "mcpServers": {
+    "anakrisis": {
+      "type": "stdio",
+      "command": "anakrisis-server",
+      "env": {}
+    }
+  }
+}
+```
+
+Restart the client and the nine tools appear.
 
 <details>
 <summary>Running it directly, and Docker</summary>
@@ -139,7 +173,7 @@ Anakrisis is just an MCP server. It works with **any** MCP-capable assistant, an
 | **Web access** | Usually built in — it can go and collect for you | None. You run the collection yourself |
 | **Privacy** | Your case context goes to a provider's API | **Nothing leaves your machine** |
 
-**The trade is privacy against reasoning and speed.** Pick by case, not by principle: a public-record company check and an investigation involving a vulnerable person do not deserve the same answer.
+**The trade is privacy against reasoning and speed.** The right choice depends on the case: a public-record company check and an investigation involving a vulnerable person have different requirements.
 
 Worth knowing either way: the doctrine, risk scoring, and hard stops are deterministic Python and YAML. They behave identically no matter what model you attach — a weaker local model doesn't get weaker guardrails, only weaker analysis.
 
@@ -205,7 +239,7 @@ Nine MCP tools cover the investigation lifecycle from intake to publication:
 
 ### MissionBrief
 
-The primary entry point. Given a goal (plus optional context: existing artifacts, constraints, actor role, method class, jurisdiction), it classifies the investigation type, computes a LOW / MEDIUM / HIGH risk tier, lists triggered risk factors and doctrine-driven hard stops, and proposes safe first steps drawn from the matching playbook.
+The primary entry point. Given a goal (plus optional context: existing artifacts, constraints, actor role, method class, jurisdiction), it classifies the investigation type, computes a risk tier (`TIER_LOW` through `TIER_CRITICAL`), lists triggered risk factors and doctrine-driven hard stops, and proposes safe first steps drawn from the matching playbook.
 
 ### CourseCorrection
 
@@ -255,9 +289,9 @@ Local YAML doctrine (doctrine/, playbooks/, report_templates/)
 
 All decision logic is driven by local configuration. The server loads doctrine, evaluates the user-described intent against it, and returns structured guidance. There are no API keys, no network calls, and no telemetry.
 
-**Quiet by default.** The advisory tools (`MissionBrief`, `CourseCorrection`, `RulesOfEngagement`) only surface warnings, hard stops, and approval checklists when the input actually trips a trigger — a substantive risk factor, a hard-stop rule from `doctrine/disallowed_actions.yaml`, or an `action_rules:` match against the proposed action. Routine planning calls return clean planning output without boilerplate warnings. This gates presentation only; risk scoring itself is unchanged.
+**Quiet by default.** The advisory tools (`MissionBrief`, `CourseCorrection`, `RulesOfEngagement`) surface warnings, hard stops, and approval checklists only when the input trips a trigger — a substantive risk factor, a hard-stop rule from `doctrine/disallowed_actions.yaml`, or an `action_rules:` match against the proposed action. Routine planning calls return planning output without warning sections. This gates presentation only; risk scoring itself is unchanged.
 
-**Quiet is not the same as clear.** Suppressing boilerplate must never read as approval. When `RulesOfEngagement` matches no rule, it says so — *unassessed, not cleared* — because the ruleset is finite and an unrecognized action has not been evaluated. Detection is keyword-based, so a deliberately euphemistic description can evade it. Treat a silent result as a prompt to restate the action plainly, not as a green light.
+**A quiet result is not a clearance.** When `RulesOfEngagement` matches no rule, it reports the action as unassessed rather than cleared, because the ruleset is finite and an unrecognized action has not been evaluated. Detection is keyword-based, so a deliberately euphemistic description can evade it. A no-match result means the action should be restated plainly and re-checked, not that it is approved.
 
 ---
 
@@ -280,12 +314,14 @@ anakrisis/
 │   └── output_policy.yaml        # Output formatting / brevity policy
 ├── playbooks/              # Investigation-type playbooks (YAML)
 ├── report_templates/       # Report templates (Markdown)
+├── tests/                  # pytest suite (doctrine fixtures, matching, templates)
 ├── docs/
 │   ├── tools.md                  # Full per-tool reference
 │   ├── doctrine.md               # How each doctrine file is evaluated
 │   └── research_personas.md      # Persona doctrine, reasoning and edge cases
 ├── Dockerfile
 ├── .mcp.json               # Project-scoped MCP registration
+├── pyproject.toml          # Packaging, dependencies, tool config
 └── requirements.txt
 ```
 
@@ -316,18 +352,25 @@ Doctrine files are cached with modification-time invalidation, so edits take eff
 
 ---
 
-## Design philosophy
+## Design approach
 
-Anakrisis follows the liability model of established security tooling:
+Anakrisis follows the liability model common to established security tooling:
 
-- **Visibility over restriction** — risk exposure is surfaced, not suppressed
-- **Warning over enforcement** — the system advises; it does not block
-- **Structure over improvisation** — playbooks, phases, and templates keep work defensible
-- **User responsibility over automated control** — judgment stays with the investigator
+- It surfaces risk exposure rather than suppressing it.
+- It advises and warns; it does not block execution.
+- It provides playbooks, phases, and templates to keep work documented.
+- Responsibility for any action taken stays with the investigator.
 
 ## Responsible use
 
 Anakrisis produces advisory guidance only. It does not validate the legality of any action, does not constitute legal advice, and does not prevent misuse. Risk tiers and warnings are heuristic aids, not compliance determinations. You are solely responsible for ensuring your investigative activities comply with applicable laws, platform terms of service, and your organization's policies. Do not feed the system live personal data it does not need, and never treat its output as authorization to act.
+
+## Contributing and support
+
+- **Contributing:** development setup and the test/lint workflow are in [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Security:** report vulnerabilities privately per [SECURITY.md](SECURITY.md).
+- **Changes:** see [CHANGELOG.md](CHANGELOG.md). Releases follow [Semantic Versioning](https://semver.org).
+- **Conduct:** participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
