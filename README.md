@@ -21,7 +21,9 @@ collection is performed by the model you connect:
 - **Local model** (Ollama, LM Studio, …) runs entirely on your machine with no web
   access, so it plans the collection and you carry it out.
 
-Both paths are covered step by step under [Install](#install).
+It runs in any MCP-compatible client — the Claude desktop app, Claude Code, Cursor,
+LM Studio, and others. Installing takes two steps and no coding; see
+[Install](#install).
 
 ### Example client interaction
 
@@ -72,33 +74,43 @@ The advisory model is deliberate: Anakrisis surfaces warnings, hard stops, and s
 
 ## Install
 
-The server is the same for everyone; what changes is the model you connect it to.
-Pick the path that matches how you want to run it. Each takes about five minutes.
+### What you need
 
-- **Path A — cloud model.** A hosted assistant (Claude, Gemini, GPT, …) drives the
-  server. It has web access, so it carries out collection for you.
-- **Path B — local model.** A model on your own machine (Ollama, LM Studio, …) drives
-  the server. Nothing leaves your computer, but there is no web access, so you run the
-  collection yourself.
+| | What | Why |
+|---|---|---|
+| 1 | **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** (macOS/Windows) or Docker Engine (Linux) | Runs the server in a self-contained box. You do **not** need Python or any other dependency. |
+| 2 | **An MCP-compatible AI client**, such as the Claude desktop app, Claude Code, Cursor, Windsurf, or LM Studio | This is the assistant that talks to Anakrisis. Any client that speaks MCP works. |
 
-### Prerequisites (both paths)
+That is the whole list. You do not need to download Anakrisis itself — the image is
+fetched automatically the first time your client starts the server — and you do not
+need to write any code. Claude Code is not required; the regular Claude desktop app
+works, as do Cursor, LM Studio, and others.
 
-1. **Docker**, installed and running — [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-   on macOS/Windows, or the Docker daemon on Linux.
-2. An **MCP-capable client**: a cloud one (Claude Desktop, Claude Code, …) for Path A,
-   or a local one (LM Studio, or any client that fronts Ollama) for Path B.
+Then there are two steps: install Docker, and paste one config block into your client.
 
-Pull the image once:
+### Step 1 — Install Docker
 
-```bash
-docker pull ghcr.io/not-sockpuppet/anakrisis:latest
-```
+1. Download [Docker Desktop](https://www.docker.com/products/docker-desktop/) (macOS,
+   Windows) or install the Docker Engine on Linux.
+2. Install it like any other application, then **launch it** and leave it running in
+   the background.
 
-### Path A — cloud model (recommended; collects for you)
+Docker must be running whenever you use Anakrisis, since it is what starts the server.
 
-1. Open your client's MCP configuration. In Claude Desktop this is
-   **Settings → Developer → Edit Config**; other clients have an equivalent JSON file.
-2. Add Anakrisis, with the collection mode set to `cloud`:
+### Step 2 — Add Anakrisis to your client
+
+Pick the section matching the app you use. Every one of them uses the same config; only
+the place you put it differs.
+
+<details open>
+<summary><b>Claude desktop app</b> (Claude Sonnet / Opus — the regular Claude app)</summary>
+
+1. Open Claude and go to **Settings → Developer → Edit Config**. This opens
+   `claude_desktop_config.json` in a text editor.
+   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+2. Paste this in. If the file already has an `"mcpServers"` section, add the
+   `"anakrisis"` block inside it rather than replacing the file:
 
    ```json
    {
@@ -107,7 +119,6 @@ docker pull ghcr.io/not-sockpuppet/anakrisis:latest
          "command": "docker",
          "args": [
            "run", "-i", "--rm",
-           "-v", "${HOME}/anakrisis:/home/mcpuser/anakrisis",
            "ghcr.io/not-sockpuppet/anakrisis:latest"
          ],
          "env": { "ANAKRISIS_COLLECTION_MODE": "cloud" }
@@ -116,21 +127,53 @@ docker pull ghcr.io/not-sockpuppet/anakrisis:latest
    }
    ```
 
-3. Save the file and restart the client. The nine tools appear.
-4. Ask it to plan an investigation. Because the model has web access, when Anakrisis
-   recommends collection steps the assistant will offer to run them.
+3. Save the file and **fully quit and reopen Claude** (not just close the window).
+4. The nine tools appear. Because Claude has web access, it will offer to run the
+   collection steps Anakrisis recommends.
 
-### Path B — local model (private; you collect)
+</details>
 
-1. If you use Ollama, pull a model first. Prefer a larger instruct-tuned one — small
-   models tend to summarise the guidance away rather than act on it:
+<details>
+<summary><b>Claude Code</b> (terminal)</summary>
+
+One command — it writes the configuration for you:
+
+```bash
+claude mcp add anakrisis -e ANAKRISIS_COLLECTION_MODE=cloud -- docker run -i --rm -v "$HOME/anakrisis:/home/mcpuser/anakrisis" ghcr.io/not-sockpuppet/anakrisis:latest
+```
+
+Restart Claude Code and the nine tools appear. To remove it later:
+
+```bash
+claude mcp remove anakrisis
+```
+
+</details>
+
+<details>
+<summary><b>Cursor, Windsurf, and other MCP clients</b></summary>
+
+These read the same JSON, usually from a file named `mcp.json` (Cursor:
+**Settings → MCP → Add new global MCP server**). Use the same block as the Claude
+desktop app above, then restart the client.
+
+</details>
+
+<details>
+<summary><b>Local models (Ollama, LM Studio) — private, but you collect</b></summary>
+
+A model running on your own machine has no internet access, so Anakrisis plans the
+collection and hands the steps to you. Everything stays on your computer.
+
+1. If you use Ollama, pull a model first. Prefer a larger instruct-tuned one — very
+   small models tend to summarise the guidance away rather than act on it:
 
    ```bash
    ollama pull llama3.1
    ```
 
-2. Open your local MCP client's configuration and add Anakrisis, with the collection
-   mode set to `local`:
+2. In your client's MCP configuration, use the same block as above but set the mode to
+   `local`:
 
    ```json
    {
@@ -139,7 +182,6 @@ docker pull ghcr.io/not-sockpuppet/anakrisis:latest
          "command": "docker",
          "args": [
            "run", "-i", "--rm",
-           "-v", "${HOME}/anakrisis:/home/mcpuser/anakrisis",
            "ghcr.io/not-sockpuppet/anakrisis:latest"
          ],
          "env": { "ANAKRISIS_COLLECTION_MODE": "local" }
@@ -148,29 +190,63 @@ docker pull ghcr.io/not-sockpuppet/anakrisis:latest
    }
    ```
 
-3. Save the file and restart the client. The nine tools appear. Anakrisis presents
-   collection as steps for you to carry out, since a local model has no web access.
+3. Restart the client.
 
-### Notes on the configuration
+</details>
 
-- The `-v` volume mount persists case workspaces created by `CreateCase` under
-  `~/anakrisis` on your machine. Omit it if you don't need cases to survive the
-  container exiting.
-- `ANAKRISIS_COLLECTION_MODE` accepts `cloud`, `local`, or `auto` (the default, which
-  guesses from the client name). Setting it explicitly keeps the collection offers
-  correct and the logs clean.
-- The doctrine, risk scoring, and hard stops are identical on both paths — they are
-  deterministic Python and YAML, so a weaker local model gets the same guardrails,
-  only weaker analysis.
+### Step 3 — Check it worked
 
-### Cloud vs local at a glance
+Ask your assistant:
 
-| | Cloud model | Local model |
+> Use MissionBrief to plan a background check on a vendor company. I have the company
+> name and website, and I am authorized by procurement.
+
+You should get an "Investigation Planning Assessment" back with a classification and
+safe first steps. If nothing happens, see [Troubleshooting](#troubleshooting).
+
+### Optional — keep case files on your computer
+
+By default, case workspaces created by `CreateCase` live inside the container and
+disappear when it exits. To keep them, add a volume mount using the **full path** to a
+folder on your machine — configuration files cannot expand `~` or `$HOME`, so it must
+be written out in full (for example `/Users/yourname/anakrisis` on macOS,
+`/home/yourname/anakrisis` on Linux, or `C:\\Users\\yourname\\anakrisis` on Windows):
+
+```json
+"args": [
+  "run", "-i", "--rm",
+  "-v", "/Users/yourname/anakrisis:/home/mcpuser/anakrisis",
+  "ghcr.io/not-sockpuppet/anakrisis:latest"
+]
+```
+
+### Which model should you use?
+
+| | Cloud model (Claude, Gemini, GPT, …) | Local model (Ollama, LM Studio, …) |
 |---|---|---|
 | **Collection** | The assistant runs it for you (has web access) | You run it yourself (no web access) |
 | **Reasoning** | Stronger classification, analysis, and pivots | Weaker, more so on smaller models |
 | **Speed** | Fast, no local hardware needed | Depends on your machine |
 | **Privacy** | Case context goes to a provider's API | **Nothing leaves your machine** |
+
+`ANAKRISIS_COLLECTION_MODE` accepts `cloud`, `local`, or `auto` (the default, which
+guesses from the client name). Setting it explicitly keeps the collection offers
+correct.
+
+The doctrine, risk scoring, and hard stops are identical either way — they are
+deterministic Python and YAML, so a weaker local model gets the same guardrails, only
+weaker analysis.
+
+### Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| Tools do not appear | Fully quit and reopen the client — most only read the config at startup. |
+| "docker: command not found" | Docker is not installed or not on `PATH`. Install Docker Desktop and launch it. |
+| "Cannot connect to the Docker daemon" | Docker is installed but not running. Open Docker Desktop and wait for it to report Running. |
+| "invalid reference format" or a literal `${HOME}` folder appears | A `-v` path is not a full path. Configuration files do not expand `~` or `$HOME`; write the path out in full. |
+| First start is slow | The image is downloading (about 150 MB). Later starts are immediate. |
+| Nothing works and you want a clean check | Run `docker run -i --rm ghcr.io/not-sockpuppet/anakrisis:latest` in a terminal. It should wait silently for input — that means the server starts correctly. Press Ctrl-C to exit. |
 
 <details>
 <summary>Run from source instead of Docker</summary>
