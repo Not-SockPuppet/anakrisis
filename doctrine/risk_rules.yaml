@@ -1,8 +1,9 @@
 meta:
-  version: "1.1.0"
-  last_updated: "2026-02-16"
+  version: "1.2.0"
+  last_updated: "2026-08-15"
   owner: "Anakrisis Maintainers"
   change_log:
+    - "1.2.0: Switched contains_any/not_contains_any to whole-word matching (a value no longer matches inside a longer word); added inflected trigger values the old substring matching covered implicitly; corrected stale test_cases (TC06, TC07, TC09) to match engine behavior."
     - "1.1.0: Replaced narrative rules with deterministic scoring model, explicit triggers, approvals/controls, explainability schema, and test cases."
     - "1.0.0: Initial draft with basic factors, tiers, and mitigations."
 
@@ -65,7 +66,7 @@ normalization:
     method: "whitespace_split"
     keep_original_text: true
     use_normalized_text_for_matching: true
-  notes: "All string matching in triggers uses normalized text (trimmed, lowercased, whitespace-collapsed)."
+  notes: "All string matching in triggers uses normalized text (trimmed, lowercased, whitespace-collapsed). contains_any and not_contains_any match whole words/phrases at word boundaries: 'contact' does not match 'contacts'. List inflected forms (e.g. 'scrape', 'scraping') explicitly when both should trigger."
   missing_field_handling:
     rule: "Treat missing fields as their defaults; missing_any evaluates to true when a field is empty after normalization (empty string or enum equal to 'unknown')."
     empty_definition: "A field is considered missing if, after normalization, it is an empty string or (for enums) equals its default 'unknown'."
@@ -170,6 +171,10 @@ evaluation_model:
 # - values: list[string] for contains/equals/not_contains
 # - fields: list[string] for missing_any
 # - explain_text: string
+#
+# contains_any / not_contains_any values match as whole words or phrases, not
+# substrings: "contact" fires on "contact them" but not on "contacts". Include
+# inflected forms explicitly where both should match.
 
 risk_factors:
   - id: "RF_MISSING_CONTEXT"
@@ -237,7 +242,7 @@ risk_factors:
         explain_text: "Constraints reference direct interaction with a person."
       - type: "contains_any"
         field: "goal"
-        values: ["reach out", "contact", "interview", "confront", "sting"]
+        values: ["reach out", "contact", "contacting", "interview", "interviewing", "confront", "confronting", "sting"]
         explain_text: "Goal references direct interaction."
 
   # Scoped to impersonating a real person and to pretexting. A non-attributable
@@ -275,11 +280,11 @@ risk_factors:
         explain_text: "method_class indicates automation or bulk collection."
       - type: "contains_any"
         field: "constraints"
-        values: ["scrape", "scraping", "crawler", "bot", "automation", "automate", "bulk", "at scale", "large scale", "mass collect", "batch", "harvest"]
+        values: ["scrape", "scraping", "crawler", "bot", "automation", "automate", "automating", "bulk", "at scale", "large scale", "mass collect", "batch", "harvest", "harvesting"]
         explain_text: "Constraints reference scraping/automation/bulk collection."
       - type: "contains_any"
         field: "goal"
-        values: ["bulk", "at scale", "large scale", "scrape", "scraping", "harvest", "collect many", "batch"]
+        values: ["bulk", "at scale", "large scale", "scrape", "scraping", "harvest", "harvesting", "collect many", "batch"]
         explain_text: "Goal references bulk collection."
 
   - id: "RF_SENSITIVE_CATEGORIES"
@@ -371,11 +376,11 @@ risk_factors:
     triggers:
       - type: "contains_any"
         field: "constraints"
-        values: ["bypass", "evade", "circumvent", "access without login", "avoid detection", "burner accounts", "sockpuppet to access"]
+        values: ["bypass", "bypassing", "evade", "evading", "circumvent", "circumventing", "access without login", "avoid detection", "burner accounts", "sockpuppet to access"]
         explain_text: "Constraints reference bypass/evasion/circumvention."
       - type: "contains_any"
         field: "goal"
-        values: ["bypass", "circumvent", "evade"]
+        values: ["bypass", "bypassing", "circumvent", "circumventing", "evade", "evading"]
         explain_text: "Goal references bypass/evasion/circumvention."
       - type: "contains_any"
         field: "what_you_have"
@@ -655,9 +660,11 @@ test_cases:
       jurisdiction_country: "us"
       jurisdiction_state: "il"
     expected:
-      triggered_factor_ids: ["RF_NON_PASSIVE_METHOD"]
-      expected_score: 3
-      expected_tier_id: "TIER_LOW"
+      # "coworker" is a listed private-individual value, so RF_PRIVATE_INDIVIDUAL
+      # fires alongside the direct-contact method.
+      triggered_factor_ids: ["RF_NON_PASSIVE_METHOD", "RF_PRIVATE_INDIVIDUAL"]
+      expected_score: 6
+      expected_tier_id: "TIER_MEDIUM"
 
   - id: "TC07_deception_pretexting"
     input:
@@ -669,8 +676,10 @@ test_cases:
       jurisdiction_country: "us"
       jurisdiction_state: "wa"
     expected:
-      triggered_factor_ids: ["RF_DECEPTION_OR_IMPERSONATION", "RF_NON_PASSIVE_METHOD", "RF_URGENCY_TIME_PRESSURE"]
-      expected_score: 10
+      # Constraints are non-empty and state no authorization basis, so RF_NO_AUTH
+      # fires via its not_contains_any (silence) trigger.
+      triggered_factor_ids: ["RF_NO_AUTH", "RF_NON_PASSIVE_METHOD", "RF_DECEPTION_OR_IMPERSONATION", "RF_URGENCY_TIME_PRESSURE"]
+      expected_score: 14
       expected_tier_id: "TIER_HIGH"
 
   - id: "TC08_home_family_scope"
@@ -697,8 +706,10 @@ test_cases:
       jurisdiction_country: "us"
       jurisdiction_state: "ny"
     expected:
-      triggered_factor_ids: ["RF_MALICIOUS_OR_HARASSMENT_INTENT", "RF_URGENCY_TIME_PRESSURE", "RF_DWELLING_OR_FAMILY", "RF_NO_AUTH"]
-      expected_score: 18
+      # actor_role is unknown, so RF_MISSING_CONTEXT also fires; the raw sum
+      # (2+4+4+2+8) lands exactly on the score cap of 20.
+      triggered_factor_ids: ["RF_MISSING_CONTEXT", "RF_NO_AUTH", "RF_DWELLING_OR_FAMILY", "RF_URGENCY_TIME_PRESSURE", "RF_MALICIOUS_OR_HARASSMENT_INTENT"]
+      expected_score: 20
       expected_tier_id: "TIER_CRITICAL"
 
   - id: "TC10_bypass_paywall_evasion"

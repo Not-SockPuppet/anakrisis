@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-The Anakrisis Protocol MCP Server - Ethics-aware OSINT decision and analysis system
+Anakrisis MCP server - ethics-aware OSINT planning, risk evaluation, and analysis.
 """
-import sys
-import os
-import logging
-from pathlib import Path
-import re
 import json
+import logging
+import os
+import re
+import sys
 from datetime import datetime
+from pathlib import Path
+
 import yaml
 from mcp.server.fastmcp import FastMCP
 
@@ -115,13 +116,13 @@ def render_collection_offer(suggestions) -> str:
     mode = collection_mode()
     if mode == "local":
         header = "Collection Steps (run these yourself)"
-        lead = "No web access assumed for this host, so these are for you to carry out:"
+        lead = "This host is assumed to have no web access; carry these out yourself:"
     elif mode == "cloud":
-        header = "Collection I Can Run"
-        lead = "Say the word and I'll take these on:"
+        header = "Collection Available on Request"
+        lead = "The assistant can run these on request:"
     else:
         header = "Suggested Collection"
-        lead = "If your assistant has web access it can run these; otherwise they are yours to do:"
+        lead = "If your assistant has web access it can run these; otherwise carry them out yourself:"
 
     return render_section(header, [lead] + items, max_items=8)
 
@@ -199,6 +200,10 @@ CASE_SUBDIRS = ["Sources", "Screenshots", "PDFs", "Intelligence", "OtherEvidence
 # Conservative case name policy (prevents path traversal / weird chars)
 _CASE_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 _-]{0,63}$")
 
+# Report template name components (investigation_type, audience) are interpolated
+# into filenames, so they get the same traversal guard as case names.
+_TEMPLATE_PART_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
+
 # === YAML CACHE ===
 # Cache YAML by file path with mtime invalidation (reduces latency for repeated tool calls).
 _YAML_CACHE: dict[str, dict] = {}
@@ -214,6 +219,17 @@ def _norm_text(value: str) -> str:
     # match normalization.doctrine: trim + collapse whitespace + lowercase
     s = " ".join(s.strip().split())
     return s.lower()
+
+
+def _contains_word(needle: str, haystack: str) -> bool:
+    """Whole-word/phrase containment: "contact" must not match "contacts".
+
+    Same matching discipline as suggest_collection() -- plain substring checks
+    fire on partial words and produce false-positive risk factors.
+    """
+    if not needle:
+        return False
+    return re.search(rf"\b{re.escape(needle)}\b", haystack) is not None
 
 
 def _is_missing_field(field_name: str, normalized_value: str) -> bool:
@@ -266,18 +282,18 @@ def _trigger_matches(trigger: dict, normalized_inputs: dict) -> tuple[bool, list
     values_norm = [_norm_text(str(v)) for v in values if str(v).strip()]
 
     if ttype == "contains_any":
-        matched = [v for v in values_norm if v and v in field_value]
+        matched = [v for v in values_norm if _contains_word(v, field_value)]
         return (len(matched) > 0), matched
 
     if ttype == "equals_any":
         matched = [v for v in values_norm if v and field_value == v]
         return (len(matched) > 0), matched
-        
+
     if ttype == "not_contains_any":
         # Match when NONE of the values appear in the field value.
         if not values_norm:
             return False, []
-        matched = [v for v in values_norm if v and v in field_value]
+        matched = [v for v in values_norm if _contains_word(v, field_value)]
         return (len(matched) == 0), []
 
     # Unknown trigger type
@@ -368,7 +384,7 @@ def load_yaml_file(filepath):
         if isinstance(cached, dict) and cached.get("mtime") == mtime and "data" in cached:
             return cached.get("data")
 
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
         _YAML_CACHE[key] = {"mtime": mtime, "data": data}
@@ -383,7 +399,7 @@ def load_playbooks():
     if not PLAYBOOKS_DIR.exists():
         logger.warning("Playbooks directory not found")
         return playbooks
-    
+
     for playbook_file in PLAYBOOKS_DIR.glob("*.yaml"):
         data = load_yaml_file(playbook_file)
         if data:
@@ -405,18 +421,30 @@ def load_disallowed_actions():
     return load_yaml_file(DISALLOWED_ACTIONS_FILE) or {}
 
 def load_report_template(investigation_type, audience):
-    """Load a report template for the given investigation type and audience."""
-    template_file = REPORT_TEMPLATES_DIR / f"{investigation_type}_{audience}.md"
-    if not template_file.exists():
-        template_file = REPORT_TEMPLATES_DIR / f"generic_{audience}.md"
-    if not template_file.exists():
-        template_file = REPORT_TEMPLATES_DIR / "default.md"
-    
+    """Load a report template for the given investigation type and audience.
+
+    Both parameters become filename components, so anything that fails the
+    template-name pattern is discarded and resolution falls through to
+    default.md rather than touching a caller-controlled path.
+    """
+    def _safe_part(value) -> str:
+        part = str(value or "").strip()
+        return part if _TEMPLATE_PART_RE.match(part) else ""
+
+    inv = _safe_part(investigation_type)
+    aud = _safe_part(audience)
+
+    template_file = REPORT_TEMPLATES_DIR / "default.md"
+    if inv and aud and (REPORT_TEMPLATES_DIR / f"{inv}_{aud}.md").exists():
+        template_file = REPORT_TEMPLATES_DIR / f"{inv}_{aud}.md"
+    elif aud and (REPORT_TEMPLATES_DIR / f"generic_{aud}.md").exists():
+        template_file = REPORT_TEMPLATES_DIR / f"generic_{aud}.md"
+
     if not template_file.exists():
         return "# Investigation Report Template\n\nTemplate not found. Please create appropriate report template files."
-    
+
     try:
-        with open(template_file, 'r', encoding='utf-8') as f:
+        with open(template_file, encoding='utf-8') as f:
             return f.read()
     except Exception as e:
         logger.error(f"Error loading template: {e}")
@@ -874,12 +902,12 @@ async def CreateCase(case_name: str = "", overwrite: bool = False) -> str:
 
 def classify_investigation(goal):
     """Classify investigation type based on goal."""
-    
+
     goal_lower = (goal or "").lower()
-    
+
     # Simple keyword-based classification
     classifications = []
-    
+
     if "background" in goal_lower or "verify identity" in goal_lower:
         classifications.append("background_check")
     if "threat" in goal_lower or "harassment" in goal_lower or "safety" in goal_lower:
@@ -890,10 +918,10 @@ def classify_investigation(goal):
         classifications.append("person_location")
     if "digital footprint" in goal_lower or "social media" in goal_lower:
         classifications.append("digital_footprint_analysis")
-    
+
     if not classifications:
         classifications.append("general_investigation")
-    
+
     return classifications
 
 
@@ -983,7 +1011,7 @@ def assess_risk(goal, what_you_have, constraints, actor_role="", method_class=""
         substantive_match = False  # matched by something other than missing_any
         match_explains = []
 
-        for idx, trig in enumerate(triggers):
+        for trig in triggers:
             matched, evidence = _trigger_matches(trig, normalized_inputs)
             if matched:
                 matched_any = True
@@ -1142,7 +1170,7 @@ def get_safe_first_steps(investigation_types):
     """Get safe first steps based on investigation type."""
     playbooks = load_playbooks()
     steps = []
-    
+
     for inv_type in investigation_types:
         if inv_type in playbooks:
             playbook = playbooks.get(inv_type)
@@ -1150,7 +1178,7 @@ def get_safe_first_steps(investigation_types):
                 sfs = playbook.get("safe_first_steps", [])
                 if isinstance(sfs, list):
                     steps.extend(sfs)
-    
+
     if not steps:
         steps = [
             "Document investigation scope and objectives",
@@ -1158,7 +1186,7 @@ def get_safe_first_steps(investigation_types):
             "Identify publicly available information sources",
             "Establish documentation and chain-of-custody procedures"
         ]
-    
+
     seen = set()
     out = []
     for x in steps:
@@ -1174,10 +1202,13 @@ def _action_rule_matches(rule: dict, haystack: str) -> str | None:
     """Evaluate one action rule against text. Returns the matched phrase, or None.
 
     Supports two trigger types:
-      contains_any -- any listed phrase appears as a substring
+      contains_any -- any listed phrase appears as a whole word/phrase
       all_of       -- every listed token appears somewhere, in any order.
                       Needed because literal phrase matching breaks the moment a
                       user writes "fake Instagram account" instead of "fake account".
+
+    Matching is whole-word (see _contains_word): "contact" does not fire on
+    "contacts", and "send" does not fire on "resend".
     """
     triggers = rule.get("triggers", [])
     if not isinstance(triggers, list):
@@ -1193,11 +1224,11 @@ def _action_rule_matches(rule: dict, haystack: str) -> str | None:
         tokens = [str(v).lower().strip() for v in values if str(v).strip()]
 
         if ttype == "all_of":
-            if tokens and all(tok in haystack for tok in tokens):
+            if tokens and all(_contains_word(tok, haystack) for tok in tokens):
                 return " + ".join(tokens)
         else:
             for tok in tokens:
-                if tok in haystack:
+                if _contains_word(tok, haystack):
                     return tok
     return None
 
@@ -1255,17 +1286,17 @@ def get_safer_alternatives(proposed_action):
     """Suggest safer alternatives to risky actions."""
     alternatives = []
     action_lower = (proposed_action or "").lower()
-    
+
     if "scrape" in action_lower or "crawl" in action_lower:
         alternatives.append("Use official APIs where available")
         alternatives.append("Manual review of publicly accessible pages")
         alternatives.append("Use commercial OSINT platforms with proper licensing")
-    
+
     if "login" in action_lower or "access account" in action_lower:
         alternatives.append("Work with platform's legal/LEA channels")
         alternatives.append("Use lawful subpoena or court order processes")
         alternatives.append("Rely on publicly visible information only")
-    
+
     if "automate" in action_lower or "bulk" in action_lower:
         alternatives.append("Manual, targeted collection within rate limits")
         alternatives.append("Use platforms with terms allowing research access")
@@ -1284,8 +1315,8 @@ def get_safer_alternatives(proposed_action):
                                        "fake account", "fake profile", "dummy account")):
         alternatives.append("Keep the persona non-attributable: no real person's name, photo, or biography, and nothing traceable to you")
         alternatives.append("View only -- no follows, requests, messages, comments, reactions, or story views")
-        alternatives.append("Heads up: some platforms' terms don't allow secondary accounts -- just keep it in mind")
-        alternatives.append("Remember a persona does not unlock private content -- reaching it still needs a follow request, which is interaction")
+        alternatives.append("Note: some platforms' terms of service prohibit secondary accounts")
+        alternatives.append("A persona does not unlock private content -- reaching it still requires a follow request, which is interaction")
 
     if any(k in action_lower for k in ("follow request", "friend request", "connection request",
                                        "message", "contact", "reach out")):
@@ -1301,7 +1332,7 @@ def get_safer_alternatives(proposed_action):
         alternatives.append("Consult with legal counsel before proceeding")
         alternatives.append("Use passive collection methods only")
         alternatives.append("Limit scope to publicly accessible information")
-    
+
     return alternatives
 
 # === MCP TOOLS (continued) ===
@@ -1318,35 +1349,35 @@ async def MissionBrief(
 ) -> str:
     """Pre-investigation planning, classification, and safety assessment tool."""
     logger.info("Executing MissionBrief")
-    
+
     if not goal.strip():
         return "❌ Error: 'goal' parameter is required. Please describe what you're trying to accomplish."
-    
-    
+
+
     try:
         output_policy = get_tool_output_policy("MissionBrief")
         max_items = _policy_int(output_policy, "max_bullets_per_section", 7, maximum=12)
 
         # Classify investigation
         investigation_types = classify_investigation(goal)
-        
+
         # Assess risk
         risk_tier, risk_factors, triggered_factor_ids, substantive_factor_ids = assess_risk(
             goal, what_you_have, constraints,
             actor_role=actor_role, method_class=method_class,
             jurisdiction_country=jurisdiction_country, jurisdiction_state=jurisdiction_state
         )
-        
+
         # Get hard stops
         hard_stops = get_hard_stops(constraints)
-        
+
         # Get safe first steps
         safe_steps = get_safe_first_steps(investigation_types)
 
         # Passive collection implied by the artifacts in hand, phrased for whatever
         # is driving this session (see collection_mode()). Suppressed on a hard stop.
         collection_suggestions = suggest_collection(what_you_have, hard_stops)
-        
+
         # Determine required approvals / controls from doctrine
         risk_rules = load_risk_rules()
         approvals_needed = []
@@ -1407,7 +1438,7 @@ async def MissionBrief(
                 approvals_needed = ["Legal/Compliance review", "Supervisor approval"]
             elif str(risk_tier) == "MEDIUM":
                 approvals_needed = ["Supervisor approval"]
-        
+
         # Quiet by default: only surface warnings, hard stops, approvals,
         # controls, mitigations, and the audit checklist when the user actually
         # trips a substantive risk factor (action/intent signal) or a hard stop.
@@ -1427,7 +1458,7 @@ async def MissionBrief(
                 key_findings.append(f"Hard stops identified: {len(hard_stops)}")
 
         response_parts = [
-            "📋 INVESTIGATION PRE-FLIGHT ASSESSMENT",
+            "📋 INVESTIGATION PLANNING ASSESSMENT",
             render_section("Key Findings", key_findings, max_items),
             render_section("Safe Next Steps", safe_steps, max_items),
             render_collection_offer(collection_suggestions),
@@ -1488,15 +1519,15 @@ async def MissionBrief(
 async def CourseCorrection(current_phase: str = "", new_artifacts: str = "", constraints: str = "") -> str:
     """Update planning after progress, leads, or roadblocks in investigation."""
     logger.info("Executing CourseCorrection")
-    
+
     if not current_phase.strip():
         return "❌ Error: 'current_phase' parameter is required. Valid phases: intake, planning, discovery, validation, reporting"
-    
+
     valid_phases = ["intake", "planning", "discovery", "validation", "reporting"]
     if current_phase.lower() not in valid_phases:
         return f"❌ Error: Invalid phase. Must be one of: {', '.join(valid_phases)}"
-    
-    
+
+
     try:
         output_policy = get_tool_output_policy("CourseCorrection")
         max_items = _policy_int(output_policy, "max_bullets_per_section", 5, maximum=10)
@@ -1533,9 +1564,9 @@ async def CourseCorrection(current_phase: str = "", new_artifacts: str = "", con
                 "Include what was NOT found and why"
             ]
         }
-        
+
         current_guidance = phase_guidance.get(current_phase.lower(), [])
-        
+
         # Re-assess risk with new artifacts
         risk_tier, risk_factors, cc_triggered_ids, cc_substantive_ids = assess_risk("", new_artifacts, constraints)
 
@@ -1674,10 +1705,10 @@ Use the following doctrine-bound prompt to redact the submitted report with the 
 async def RulesOfEngagement(proposed_action: str = "", context: str = "") -> str:
     """Safety interlock for proposed actions - identifies risks and suggests safer alternatives."""
     logger.info("Executing RulesOfEngagement")
-    
+
     if not proposed_action.strip():
         return "❌ Error: 'proposed_action' parameter is required. Describe what you're considering doing."
-    
+
     try:
         output_policy = get_tool_output_policy("RulesOfEngagement")
         max_items = _policy_int(output_policy, "max_bullets_per_section", 6, maximum=10)
@@ -1686,14 +1717,14 @@ async def RulesOfEngagement(proposed_action: str = "", context: str = "") -> str
 
         total_warnings = sum(len(w) for w in warnings.values())
 
-        # No rule fired. This is NOT a clearance -- the ruleset is finite and an
-        # unrecognized action is unassessed, not safe. Say so plainly.
+        # No rule fired. This is not a clearance -- the ruleset is finite and an
+        # unrecognized action has simply not been evaluated. Say so plainly.
         if not matched_any:
             return "\n".join(part for part in [
                 "🔍 ACTION REVIEW",
                 render_section("Key Findings", [
-                    "Safety level: ⚪ No rule matched — NOT a clearance.",
-                    "No doctrine action rule recognized this description. Unassessed is not the same as safe.",
+                    "Safety level: ⚪ No rule matched — this is not a clearance.",
+                    "No doctrine action rule recognized this description, so the action has not been evaluated.",
                     "Confirm the action is passive, authorized, and within scope before proceeding.",
                     "If the action involves a target individual, restate it plainly and re-run this check.",
                 ], max_items),
@@ -1753,17 +1784,17 @@ async def RulesOfEngagement(proposed_action: str = "", context: str = "") -> str
 async def ReportTemplate(investigation_type: str = "", audience: str = "", constraints: str = "") -> str:
     """Generate documentation template based on investigation type and audience."""
     logger.info("Executing ReportTemplate")
-    
+
     if not investigation_type.strip():
         investigation_type = "general_investigation"
-    
+
     if not audience.strip():
         audience = "internal"
-    
+
     try:
         # Load appropriate template
         template = load_report_template(investigation_type, audience)
-        
+
         # Add metadata header
         response = f"""📄 INVESTIGATION REPORT TEMPLATE
 
@@ -2103,9 +2134,11 @@ Note: This tool only recommends external resources from a local catalog.
     return "\n".join(lines) + render_output_policy_block("AssignTools")
 
 # === SERVER STARTUP ===
-if __name__ == "__main__":
+
+def main() -> None:
+    """Entry point for the MCP server (console script and `python anakrisis.py`)."""
     logger.info("Starting anakrisis MCP server...")
-    
+
     # Verify required files exist
     required_files = [
         RISK_RULES_FILE,
@@ -2116,21 +2149,25 @@ if __name__ == "__main__":
         REPORT_REDACTION_FILE,
         OUTPUT_POLICY_FILE
     ]
-    
+
     missing_files = [f for f in required_files if not f.exists()]
     if missing_files:
         logger.warning(f"Missing configuration files: {missing_files}")
         logger.warning("Server will use fallback rules")
-    
+
     # Verify directories exist
     for directory in [PLAYBOOKS_DIR, REPORT_TEMPLATES_DIR]:
         if not directory.exists():
             logger.warning(f"Directory not found: {directory}")
             logger.warning("Creating directory...")
             directory.mkdir(parents=True, exist_ok=True)
-    
+
     try:
         mcp.run(transport='stdio')
     except Exception as e:
         logger.error(f"Server error: {e}", exc_info=True)
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
