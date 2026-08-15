@@ -1,6 +1,13 @@
 # Use Python slim image
 FROM python:3.11-slim
 
+# Ownership marker for the official MCP registry, plus standard image metadata.
+LABEL io.modelcontextprotocol.server.name="io.github.Not-SockPuppet/anakrisis" \
+      org.opencontainers.image.title="anakrisis" \
+      org.opencontainers.image.description="Ethics-aware OSINT investigation planning and risk evaluation, delivered as an MCP server." \
+      org.opencontainers.image.source="https://github.com/Not-SockPuppet/anakrisis" \
+      org.opencontainers.image.licenses="MIT"
+
 # Set working directory
 WORKDIR /app
 
