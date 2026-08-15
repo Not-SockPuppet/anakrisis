@@ -24,7 +24,7 @@ classifiers = [
 ]
 dependencies = [
     # Capped below 2.0: mcp 2.x relocated mcp.server.fastmcp, which this server imports.
-    "mcp[cli]>=1.2.0,<2",
+    "mcp[cli]>=1.2.0,<3",
     "pyyaml>=6.0.1",
 ]
 
