@@ -375,3 +375,6 @@ Anakrisis produces advisory guidance only. It does not validate the legality of 
 ## License
 
 [MIT](LICENSE)
+
+<!-- Ownership marker for the official MCP registry; must match the published package. -->
+mcp-name: io.github.Not-SockPuppet/anakrisis
