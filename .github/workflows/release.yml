@@ -69,7 +69,7 @@ jobs:
 
       # Records a signed provenance attestation for the published image.
       - name: Attest provenance
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.build.outputs.digest }}
