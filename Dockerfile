@@ -1,5 +1,5 @@
 # Use Python slim image
-FROM python:3.14-slim
+FROM python:3.15-slim
 
 # Ownership marker for the official MCP registry, plus standard image metadata.
 LABEL io.modelcontextprotocol.server.name="io.github.Not-SockPuppet/anakrisis" \
